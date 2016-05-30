@@ -53,7 +53,7 @@ PREDICATE(sample_point, 4) {
     return A4 = PlTerm(var);
 }
 
-/* line_points(POINT, DIR, PTS)
+/* line_points(POINT, DIR, BOUND, PTS)
  * get a list of points that on line
  * @POINT = [X, Y, Z]: a point that the line crosses
  * @DIR = [DX, DY, DZ]: direction of the line

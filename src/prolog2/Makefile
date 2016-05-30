@@ -29,7 +29,7 @@ LDFLAGS_ARMA = -larmadillo
 CXXFLAGS_QT = `pkg-config --cflags Qt5Gui`
 LDFLAGS_QT = `pkg-config --libs Qt5Gui`
 
-all:cvio.so cvsampler.so cvdraw.so
+all:cvio.so cvsampler.so cvdraw.so cvatari.so
 
 cvio.so:cvio.o
 	$(CXX) -shared $(LIBS) cvio.o -o cvio.so $(LDFLAGS_CV) $(LDFLAGS_SWI) $(LDFLAGS_QT)
@@ -48,6 +48,12 @@ cvdraw.so:cvdraw.o
 
 cvdraw.o:
 	$(CXX) -shared $(CXXFLAGS) $(CXXFLAGS_CV) $(CXXFLAGS_SWI) $(CXXFLAGS_QT) -c cvdraw.cpp
+
+cvatari.so:cvatari.o
+	$(CXX) -shared $(LIBS) cvatari.o -o cvatari.so $(LDFLAGS_CV) $(LDFLAGS_SWI) $(LDFLAGS_QT)
+
+cvatari.o:
+	$(CXX) -shared $(CXXFLAGS) $(CXXFLAGS_CV) $(CXXFLAGS_SWI) $(CXXFLAGS_QT) -c cvatari.cpp
 
 clean:
 	rm -rf *.o *.so
