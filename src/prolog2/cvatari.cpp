@@ -10,6 +10,7 @@
 #include "../utils2/memread.hpp"
 
 #include <opencv2/core/core.hpp>
+#include "opencv2/imgproc/imgproc.hpp"
 #include <opencv2/highgui/highgui.hpp>
 #include <SWI-cpp.h>
 #include <SWI-Prolog.h>
@@ -23,6 +24,8 @@
 #endif
 
 #include <string>
+#include <tgmath.h>
+#include <math.h>
 
 using namespace std;
 using namespace cv;
@@ -129,4 +132,19 @@ PREDICATE(action_right, 2){
     double reward = ale->act(a);
     return A2 = PlTerm(reward);
 }
+
+/* gradient_point(+IMGSEQ, +[X, Y, Z], +KERNEL_SIZE, -GRAD)
+ * get gradient of local area of point [X, Y, Z] in image sequence IMGSEQ
+ */
+PREDICATE(sample_point, 3) {
+    char *p1 = (char*) A1;
+    vector<int> vec = list2vec<int>(A2, 3);
+    Scalar point(vec[0], vec[1], vec[2]); // coordinates scalar
+
+    // get image sequence and compute variance
+    const string add_seq(p1);
+    vector<Mat> *seq = str2ptr<vector<Mat>>(add_seq);
+
+}
+
 

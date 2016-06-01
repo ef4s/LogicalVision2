@@ -98,6 +98,7 @@ PREDICATE(line_seg_points, 4) {
     vector<Scalar> pts = get_line_seg_points(start, end, bound);
     return A4 = point_vec2list(pts);
 }
+
 /* ellipse_points(CENTRE, PARAM, BOUND, PTS)
  * get a list of points lie on a ellipse on a plane (the 3rd dimenstion
  * is fixed)
