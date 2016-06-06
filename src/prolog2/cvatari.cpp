@@ -133,18 +133,79 @@ PREDICATE(action_right, 2){
     return A2 = PlTerm(reward);
 }
 
-/* gradient_point(+IMGSEQ, +[X, Y, Z], +KERNEL_SIZE, -GRAD)
- * get gradient of local area of point [X, Y, Z] in image sequence IMGSEQ
+///* gradient_point(+IMGSEQ, +[X, Y, Z], +KERNEL_SIZE, -GRAD)
+// * get gradient of local area of point [X, Y, Z] in image sequence IMGSEQ
+// */
+//PREDICATE(sample_point, 3) {
+//    char *p1 = (char*) A1;
+//    vector<int> vec = list2vec<int>(A2, 3);
+//    Scalar point(vec[0], vec[1], vec[2]); // coordinates scalar
+//
+//    // get image sequence and compute variance
+//    const string add_seq(p1);
+//    vector<Mat> *seq = str2ptr<vector<Mat>>(add_seq);
+//
+//}
+//
+///* gradient_point(+IMGSEQ, +[X, Y, Z], +KERNEL_SIZE, -[Magnitude, Direction])
+// * get gradient of local area of point [X, Y, Z] in image sequence IMGSEQ
+// */
+//PREDICATE(gradient_point, 3) {
+//    char *p1 = (char*) A1;
+//    vector<int> vec = list2vec<int>(A2, 3);
+//    Scalar point(vec[0], vec[1], vec[2]); // coordinates scalar
+//
+//    // get image sequence and compute variance
+//    const string add_seq(p1);
+//    vector<Mat> *seq = str2ptr<vector<Mat>>(add_seq);
+//}
+
+/* resize_image(+IMGSEQ, +IMG, +[TARGET_SIZE_X, TARGET_SIZE_Y], -[RESIZED_IMAGE])
+ * Resize an image
  */
-PREDICATE(sample_point, 3) {
+PREDICATE(resize_image, 4) {
     char *p1 = (char*) A1;
-    vector<int> vec = list2vec<int>(A2, 3);
-    Scalar point(vec[0], vec[1], vec[2]); // coordinates scalar
+    int img = (int) A2;
 
     // get image sequence and compute variance
     const string add_seq(p1);
     vector<Mat> *seq = str2ptr<vector<Mat>>(add_seq);
+    vector<int> target_sz = list2vec<int>(A3, 2);
 
+    int ddepth = CV_16S;
+
+    Mat grad;
+
+    Mat *dst = new Mat(target_sz[0], target_sz[1], ddepth);
+
+    int interpolation = CV_INTER_AREA;
+    //cout << descale << ", " << 1 / descale << endl;
+    //    resize(src, dst, Size(), 1/descale, 1/descale, interpolation);
+    resize(seq->at(img), *dst, dst->size(), 0, 0, interpolation);
+
+    string add = ptr2str(dst);
+    return A4 = PlTerm(add.c_str());
 }
 
-
+/* diff_seq(+IMGSEQ, -DIFFSEQ)
+ * difference an image sequence, REMEMBER TO RELEASE IT!
+ */
+PREDICATE(diff_seq, 2) {
+    char *p1 = (char*) A1;
+    const string add_seq(p1); // address
+    vector<Mat> *seq = str2ptr<vector<Mat>>(add_seq);
+    // copy image sequence
+    vector<Mat> *newseq = new vector<Mat>();
+    auto it = seq->begin();
+    ++it;
+    Mat first_img = seq->at(0);
+    Mat diff_img;
+    for (it; it != seq->end(); ++it) {
+        absdiff(first_img, *it, diff_img);
+        newseq->push_back(diff_img.clone());
+        first_img = *it;
+    }
+    string add = ptr2str(newseq);
+    cout << add.c_str() << endl;
+    return A2 = PlTerm(add.c_str());
+}

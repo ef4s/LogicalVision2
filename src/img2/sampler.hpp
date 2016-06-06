@@ -40,6 +40,16 @@ enum { XY_SHIFT = 16, XY_ONE = 1 << XY_SHIFT, DRAWING_STORAGE_BLOCK = (1 << 12) 
  */
 vector<Scalar> bound_scalar_3d(Scalar point, Scalar radius, Scalar bound);
 
+/* get LAB color of a point (or average color in its neighborhood)
+ * @images: image sequence
+ * @point: position of the interest point
+ * @radius: radius of the ellipsoid of the local area
+ * @return: color in current location
+ * REMARK: the 3 dimensions are width, height, duration
+ */
+Scalar cv_imgs_point_color_loc(vector<Mat> *images, Scalar point,
+                               Scalar radius = Scalar(0, 0, 0));
+
 /* calculate image local variance
  * @images: image sequence
  * @point: position of the interest point
@@ -47,8 +57,8 @@ vector<Scalar> bound_scalar_3d(Scalar point, Scalar radius, Scalar bound);
  * @return: variation of all the points
  * REMARK: the 3 dimensions are width, height, duration
  */
-double cv_img_var_loc(vector<Mat> *images, Scalar point,
-                   Scalar radius = Scalar(3, 3, 0));
+double cv_imgs_point_var_loc(vector<Mat> *images, Scalar point,
+                             Scalar radius = Scalar(3, 3, 0));
 
 /* get all points on a line
  * @point: position of a point on the line
@@ -69,7 +79,8 @@ vector<Scalar> get_line_seg_points(Scalar start, Scalar end, Scalar bound);
 /* get all points on an ellipse (ONLY FOR 2D IMAGE, SO z ALWAYS EQUALS TO 0)
  *    When sampling a specific frame, remember to change z value of all points
  * @centre: centre point of the circle
- * @param: parameters of an ellipse (long/short axis length and axis angle)
+ * @param: parameters of an ellipse (long/short axis length and
+ *     axis angle (DEG, not RAD!!!))
  * @bound: size of the 3d-space
  * @return: all points on the circle
  */
@@ -123,21 +134,26 @@ void bresenham(Scalar current, Scalar direction, Scalar inc,
  */
 void fit_ellipse(vector<Scalar> points, Scalar& centre, Scalar& param);
 
-/* determine whether a 3-d point is out of a 3d-space (positive)
+/* determine whether a 3D point is out of a 3D space (positive)
  * @point: input point
- * @bound: boundary of the poistive space
+ * @bound: boundary of the 3D space (>= 0)
  */
 bool out_of_canvas(Scalar point, Scalar bound) {
-    if (point[0] < 0 || point[1] < 0 || point[2] < 0)
+    int x = point[0];
+    int y = point[1];
+    int z = point[2];
+    
+    if (x >= 0 && x <= bound[0] - 1 &&
+        y >= 0 && y <= bound[1] - 1 &&
+        z >= 0 && z <= bound[2] - 1) 
         return false;
-    if (point[0] >= bound[0] || point[1] >= bound[1] || point[2] >= bound[2])
-        return false;
-    return true;
+    else
+        return true;
 }
 
-
 /********* implementations *********/
-double cv_img_var_loc(vector<Mat> *images, Scalar point, Scalar radius) {
+double cv_imgs_point_var_loc(vector<Mat> *images, Scalar point,
+                             Scalar radius) {
     // get left_up_most and right_down_most and enumerate all pixels
     int w = (*images)[0].cols;
     int h = (*images)[0].rows;
@@ -150,7 +166,7 @@ double cv_img_var_loc(vector<Mat> *images, Scalar point, Scalar radius) {
     // the ellipsoid is:
     //  ((X - P1)/W)^2 + ((Y - P2)/H)^2 + ((Z - P3)/D )^2 = 1
     
-    // collect pixels 
+    // collect pixels
     vector<Scalar> point_set;
     for (auto i = left_up_most[2]; i <= right_down_most[2]; i++)
         for (auto r = left_up_most[1]; r <= right_down_most[1]; r++)
@@ -208,6 +224,59 @@ double cv_img_var_loc(vector<Mat> *images, Scalar point, Scalar radius) {
     return std;
 }
 
+Scalar cv_imgs_point_color_loc(vector<Mat> *images, Scalar point,
+                               Scalar radius) {
+    // canvas size
+    int w = (*images)[0].cols;
+    int h = (*images)[0].rows;
+    int d = images->size();
+    // bounded neighborhood
+    vector<Scalar> bounds = bound_scalar_3d(point, radius, Scalar(w, h, d));
+    Scalar left_up_most = bounds[0];
+    Scalar right_down_most = bounds[1];
+    
+    // collect pixels 
+    vector<Scalar> point_set;
+    for (auto i = left_up_most[2]; i <= right_down_most[2]; i++)
+        for (auto r = left_up_most[1]; r <= right_down_most[1]; r++)
+            for (auto c = left_up_most[0]; c <= right_down_most[0]; c++) {
+                double p1, p2, p3;
+                p1 = radius[0] > 0 ?
+                    pow(((double) c - point[0])/radius[0], 2) : 0;
+                p2 = radius[1] > 0 ?
+                    pow(((double) r - point[1])/radius[1], 2) : 0;
+                p3 = radius[2] > 0 ?
+                    pow(((double) i - point[2])/radius[2], 2) : 0;
+                /* debug
+                cout << c << "-" << point[0] << ","
+                     << r << "-" << point[1] << ","
+                     << i << "-" << point[2] << "," << "\n\t";
+                cout << p1 << ","
+                     << p2 << ","
+                     << p3 << endl;
+                */
+                if (p1 + p2 + p3 <= 1.0) {
+                    point_set.push_back(Scalar(c, r, i));
+                }
+            }
+
+    int count = point_set.size();
+    Scalar avg = Scalar(.0, .0, .0);
+    // compute average
+    for (auto it = point_set.begin(); it != point_set.end(); ++it) {
+        Scalar pos = *it; // position of the pixel
+        Mat img = (*images)[pos[2]];
+        Vec3b pixel = img.at<Vec3b>(pos[1], pos[0]);
+        for (int channel = 0; channel < 3; channel++)
+            avg[channel] += pixel[channel];
+
+    }
+    
+    avg = avg/(double) count;
+    return avg;
+}
+
+
 vector<Scalar> bound_scalar_3d(Scalar point, Scalar radius, Scalar bound) {
     Scalar left_up_most(10000, 10000, 10000);
     Scalar right_down_most(-10000, -10000, -10000);
@@ -233,7 +302,7 @@ vector<Scalar> cv_sample_line(vector<Mat> *images, Scalar point,
     // evaluate local variance of all points
     for (auto it = line_points.begin(); it != line_points.end(); ++it) {
         Scalar pt = *it;
-        double var =  cv_img_var_loc(images, pt, loc_radius);
+        double var =  cv_imgs_point_var_loc(images, pt, loc_radius);
         // debug
         cout << (*it)[0] << ","
              << (*it)[1] << ","
@@ -257,7 +326,7 @@ vector<Scalar> cv_sample_line_seg(vector<Mat> *images, Scalar start,
     // evaluate local variance of all points
     for (auto it = line_points.begin(); it != line_points.end(); ++it) {
         Scalar pt = *it;
-        double var =  cv_img_var_loc(images, pt, loc_radius);
+        double var =  cv_imgs_point_var_loc(images, pt, loc_radius);
         // debug
         cout << (*it)[0] << ","
              << (*it)[1] << ","
@@ -296,6 +365,7 @@ vector<Scalar> get_line_points(Scalar point, Scalar direction,
     inc[1] = r_inc;
     inc[2] = d_inc;
     bresenham(point, direction, inc, bound, &re);
+    reverse(re.begin(), re.end());
 
     return re;
 }
@@ -340,7 +410,8 @@ vector<Scalar> get_line_seg_points(Scalar start, Scalar end, Scalar bound) {
 
     int err_1, err_2;
 
-    while (!out_of_canvas(Scalar(x, y, z), bound)) {
+    while (!out_of_canvas(Scalar(x, y, z), bound) &&
+           x != x2 && y != y2 && z != z2) {
         if (Adx >= Ady && Adx >= Adz) {
             err_1 = dy2 - Adx;
             err_2 = dz2 - Adx;
@@ -357,7 +428,8 @@ vector<Scalar> get_line_seg_points(Scalar start, Scalar end, Scalar bound) {
                 err_2 += dz2;
                 x += x_inc;
                 Scalar point(x, y, z);
-                if (!out_of_canvas(point, bound))
+                if (!out_of_canvas(point, bound) &&
+                    x != x2 && y != y2 && z != z2)
                     re.push_back(point);
             }
         }
@@ -378,7 +450,8 @@ vector<Scalar> get_line_seg_points(Scalar start, Scalar end, Scalar bound) {
                 err_2 += dz2;
                 y += y_inc;
                 Scalar point(x, y, z);
-                if (!out_of_canvas(point, bound))
+                if (!out_of_canvas(point, bound) &&
+                    x != x2 && y != y2 && z != z2)
                     re.push_back(point);
             }
         }
@@ -399,12 +472,13 @@ vector<Scalar> get_line_seg_points(Scalar start, Scalar end, Scalar bound) {
                 err_2 += dx2;
                 z += z_inc;
                 Scalar point(x, y, z);
-                if (!out_of_canvas(point, bound))
+                if (!out_of_canvas(point, bound) &&
+                    x != x2 && y != y2 && z != z2)
                     re.push_back(point);
             }
         }
     }
-    
+    re.push_back(Scalar(x2, y2, z2));
     return re;
 }
 /* bresenham for line, NOT segment */
@@ -448,6 +522,9 @@ void bresenham(Scalar current, Scalar direction, Scalar inc,
             err_1 += dy2;
             err_2 += dz2;
             x += x_inc;
+            Scalar point(x, y, z);
+            if (!out_of_canvas(point, bound))
+                points->push_back(point);
         }
     }
     
@@ -466,6 +543,9 @@ void bresenham(Scalar current, Scalar direction, Scalar inc,
             err_1 += dx2;
             err_2 += dz2;
             y += y_inc;
+            Scalar point(x, y, z);
+            if (!out_of_canvas(point, bound))
+                points->push_back(point);
         }
     }
    
@@ -484,17 +564,19 @@ void bresenham(Scalar current, Scalar direction, Scalar inc,
             err_1 += dy2;
             err_2 += dx2;
             z += z_inc;
+            Scalar point(x, y, z);
+            if (!out_of_canvas(point, bound))
+                points->push_back(point);
         }
     }
-    if (x >= 0 && x <= bound[0] - 1 && y >= 0 && y <= bound[1] - 1 &&
-        z >= 0 && z <= bound[2] - 1) {
-        points->push_back(Scalar(x, y, z));
-        bresenham(Scalar(x, y, z), direction, inc, bound, points);
-    }
+    Scalar point(x, y, z);
+    if (!out_of_canvas(point, bound))
+        bresenham(point, direction, inc, bound, points);
 }
 
 void fit_ellipse(vector<Scalar> points, Scalar& centre, Scalar& param) {
     assert(points.size() >= 5); // must use more than 5 points
+    int frame = points[0][2];
     arma::mat pts(points.size(), 2);
     for (arma::uword i = 0; i < points.size(); i++) {
         arma::rowvec p = {(double) points[i][0], (double) points[i][1]};
@@ -536,7 +618,7 @@ void fit_ellipse(vector<Scalar> points, Scalar& centre, Scalar& param) {
     double num = b * b - a * c;
     int x0 = int((c * d - b * f) / num);
     int y0 = int((a * f - b * d) / num);
-    centre = Scalar(x0, y0, -1); // centre of ellipse
+    centre = Scalar(x0, y0, frame); // centre of ellipse
     double up = 2*(a * f * f + c * d * d + g * b * b
                    - 2 * b * d * f - a * c * g);
     double down1 = (b * b - a * c) *
@@ -557,32 +639,45 @@ void fit_ellipse(vector<Scalar> points, Scalar& centre, Scalar& param) {
         else
             angle = arma::datum::pi/2 + atan(2 * b / (a - c)) / 2;
     // save parameters
+    angle = 90 + (angle * 180/arma::datum::pi); // readjust "angle" to OpenCV radius axis
     if (res1 >= res2)
-        param = Scalar(res1, res2, angle);
+        param = Scalar(round(res1), round(res2), round(angle));
     else
-        param = Scalar(res2, res1, angle);
+        param = Scalar(round(res2), round(res1), round(angle));
 }
 
 vector<Scalar> get_ellipse_points(Scalar centre, Scalar param, Scalar bound) {
     vector<Scalar> re;
     // detailness of using polylines to approximate ellipse
-    int delta = (std::max((int) param[0], (int) param[1]) + (XY_ONE >> 1)) >> XY_SHIFT;
+    int width = std::abs((int) param[0]);
+    int height = std::abs((int) param[1]);
+    if (width > height)
+        SWAP(width, height);
+
     std::vector<Point> v; // vertices
+    //cout << "Starting OpenCV ellipse2Poly.\n";
     ellipse2Poly(Point(centre[0], centre[1]),
-                 Size(param[0], param[1]),
-                 param[2], 0, 360, delta, v);
+                 Size(width, height),
+                 param[2], 0, 360, 3, v); // the "3" before "v" is a parameter to control the accuracy of the polygon-approximation to ellipse
     if((int) v.size() <= 0)
         return re;
+    //cout << "OpenCV ellipse2Poly done.\n";
+    //cout << "Totally " << v.size() << " vertices.\n";
 
     Point p0;
-
     p0 = v[0];
-    for(int i = 0; i < (int) v.size(); i++) {
+    //cout << "Starting polygon to line segment points.\n";
+    for(int i = 1; i < (int) v.size(); i++) {
+        //cout << "converting point #" << i;
         Point p = v[i];
-        // points on plane of one frame
-        re += get_line_seg_points(Scalar(p0.x, p0.y, centre[2]), Scalar(p.x, p.y, 0), bound);
+        //cout << " (" << p.x << ", " << p.y << ")";
+        // points on line segment
+        vector<Scalar> temp_pts = get_line_seg_points(Scalar(p0.x, p0.y, centre[2]), Scalar(p.x, p.y, centre[2]), bound);
+        re += temp_pts;
+        //cout << ". Points num: " << temp_pts.size() << endl;;
         p0 = p;
     }
+    //cout << "polygon to line segment points done.\n";
     return re;
 }
 

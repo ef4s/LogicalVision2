@@ -15,10 +15,10 @@
 #include <SWI-cpp.h>
 #include <SWI-Prolog.h>
 
-/* sample_point(IMGSEQ, [X, Y, Z], VAR)
+/* sample_point_var(IMGSEQ, [X, Y, Z], VAR)
  * get variation of local area of point [X, Y, Z] in image sequence IMGSEQ
  */
-PREDICATE(sample_point, 3) {
+PREDICATE(sample_point_var, 3) {
     char *p1 = (char*) A1;
     vector<int> vec = list2vec<int>(A2, 3);
     Scalar point(vec[0], vec[1], vec[2]); // coordinates scalar
@@ -26,17 +26,17 @@ PREDICATE(sample_point, 3) {
     // get image sequence and compute variance
     const string add_seq(p1);
     vector<Mat> *seq = str2ptr<vector<Mat>>(add_seq);
-    double var = cv_img_var_loc(seq, point);
+    double var = cv_imgs_point_var_loc(seq, point);
 
     // return variance
     return A3 = PlTerm(var);
 }
 
-/* sample_point(IMGSEQ, [X, Y, Z], [RX, RY, RZ], VAR)
+/* sample_point_var(IMGSEQ, [X, Y, Z], [RX, RY, RZ], VAR)
  * get variation of radius [RX, RY, RZ] local area
  * of point [X, Y, Z] in image sequence IMGSEQ
  */
-PREDICATE(sample_point, 4) {
+PREDICATE(sample_point_var, 4) {
     char *p1 = (char*) A1;
     vector<int> vec = list2vec<int>(A2, 3);
     Scalar point(vec[0], vec[1], vec[2]); // coordinates scalar
@@ -47,7 +47,7 @@ PREDICATE(sample_point, 4) {
     // get image sequence and compute variance
     const string add_seq(p1);
     vector<Mat> *seq = str2ptr<vector<Mat>>(add_seq);
-    double var = cv_img_var_loc(seq, point, rad);
+    double var = cv_imgs_point_var_loc(seq, point, rad);
 
     // return variance
     return A4 = PlTerm(var);
@@ -76,7 +76,7 @@ PREDICATE(line_points, 4) {
     return A4 = point_vec2list(pts);
 }
 
-/* line_seg_points(START, END, PTS)
+/* line_seg_points(START, END, BOUND, PTS)
  * get a list of points that on line segment [START, END]
  * @START = [X1, Y1, Z1]: start point of the line segment
  * @END = [X2, Y2, Z2]: end point of the line segment
@@ -100,13 +100,14 @@ PREDICATE(line_seg_points, 4) {
 }
 
 /* ellipse_points(CENTRE, PARAM, BOUND, PTS)
- * get a list of points lie on a ellipse on a plane (the 3rd dimenstion
+ * get a list of points lie on an ellipse on a plane (the 3rd dimenstion
  * is fixed)
  * @CENTRE = [X, Y, _]: centre point of the ellipse
  * @PARAM = [A, B, ALPHA]: axis length (A >= B) and tilt angle (ALPHA)
- *                         of the ellipse
+ *      of the ellipse.
+ * !!The unit of angle is DEG, not RAD; smaller than 1 then random angle!!
  * @BOUND = [W, H, D]: size limit of the video (width, height and duration),
- *                     usually obained from 'size_3d(VID, W, H, D)'
+ *      usually obained from 'size_3d(VID, W, H, D)'
  * @PTS: returned point list
  */
 PREDICATE(ellipse_points, 4) {
@@ -152,7 +153,7 @@ PREDICATE(sample_line, 5) {
     return A5 = point_vec2list(points);
 }
 
-/* sample_line(IMGSEQ, [PX, PY, PZ], [A, B, C], T_VAR, P_LIST)
+/* sample_line_seg(IMGSEQ, [SX, SY, SZ], [EX, EY, EZ], T_VAR, P_LIST)
  *     equation of the line to be sampled:
  *         (X-PX)/A=(Y-PY)/B=(Z-PZ)/C
  * @[SX, SY, SZ] is starting point of the line segment
@@ -240,4 +241,40 @@ PREDICATE(sample_line_seg, 6) {
     // sample a line and get all points that have high variance
     vector<Scalar> points = cv_sample_line_seg(seq, pt, dir, thresh, rad);
     return A6 = point_vec2list(points);
+}
+
+/* fit_elps(PTS, CENTRE, PARAM)
+ * given a list (>=5) of points, fit an ellipse on a plane (the 3rd dimenstion
+ * is fixed)
+ * @PTS: points list 
+ * @CENTRE = [X, Y, _]: centre point of the ellipse
+ * @PARAM = [A, B, ALPHA]: axis length (A >= B) and tilt angle (ALPHA)
+ *      of the ellipse.
+ * !!The unit of angle is DEG, not RAD; smaller than 1 then random angle!!
+ */
+PREDICATE(fit_elps, 3) {
+    vector<Scalar> pts = point_list2vec(A1);
+    // check if all points are on the same frame
+    int frame = pts[0][2];
+    for (auto it = pts.begin(); it != pts.end(); ++it) {
+        Scalar pt = *it;
+        if (frame != pt[2]) {
+            cout << "[ERROR] Points are not on the same frame!" << endl;
+            return FALSE;
+        }
+    }
+    // fit ellipse
+    Scalar cen;
+    Scalar param;
+    fit_ellipse(pts, cen, param);
+    // bind variables
+    vector<long> cen_vec = {(long) cen[0],
+                            (long) cen[1],
+                            (long) cen[2]};
+    vector<long> param_vec = {(long) param[0],
+                              (long) param[1],
+                              (long) param[2]};
+    A2 = vec2list<long>(cen_vec);
+    A3 = vec2list<long>(param_vec);
+    return TRUE;
 }

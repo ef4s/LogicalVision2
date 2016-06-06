@@ -30,6 +30,7 @@ CXXFLAGS_QT = `pkg-config --cflags Qt5Gui`
 LDFLAGS_QT = `pkg-config --libs Qt5Gui`
 
 all:cvio.so cvsampler.so cvdraw.so cvatari.so
+atari:cvatari.so
 
 cvio.so:cvio.o
 	$(CXX) -shared $(LIBS) cvio.o -o cvio.so $(LDFLAGS_CV) $(LDFLAGS_SWI) $(LDFLAGS_QT)
