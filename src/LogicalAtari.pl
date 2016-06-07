@@ -1,8 +1,10 @@
-load_for:-
-	load_foreign_library(foreign('src/prolog2/cvio.so')),
+:-	load_foreign_library(foreign('src/prolog2/cvio.so')),
 	load_foreign_library(foreign('src/prolog2/cvsampler.so')),
 	load_foreign_library(foreign('src/prolog2/cvdraw.so')),
 	load_foreign_library(foreign('src/prolog2/cvatari.so')).
+
+
+
 
 run_test(W):-
     format(atom(Vid_file), 'data/~w', [W]),
@@ -11,7 +13,10 @@ run_test(W):-
     video2imgseq(Vid_add, Img_seq_add),
     size_3d(Vid_add, Width, Height, Depth),
     diff_seq(Img_seq_add, Diff_seq_add),
-    resize_image(Diff_seq_add, 1234, [50, 50], Resize_img_add),
+    resize_image(Diff_seq_add, 1234, [20, 20], Resize_img_add),
+    gradient_image(Diff_seq_add, 1234, Grad_add, Angle_add),
+    write(Grad_add),
+    write(Angle_add),
     showimg_win(Resize_img_add, resized).
 %    sample_point(Img_seq_add, [1, 1, 1], VAR),
 %    write(VAR),

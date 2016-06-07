@@ -147,29 +147,50 @@ PREDICATE(action_right, 2){
 //
 //}
 //
-///* gradient_point(+IMGSEQ, +[X, Y, Z], +KERNEL_SIZE, -[Magnitude, Direction])
-// * get gradient of local area of point [X, Y, Z] in image sequence IMGSEQ
-// */
-//PREDICATE(gradient_point, 3) {
-//    char *p1 = (char*) A1;
-//    vector<int> vec = list2vec<int>(A2, 3);
-//    Scalar point(vec[0], vec[1], vec[2]); // coordinates scalar
-//
-//    // get image sequence and compute variance
-//    const string add_seq(p1);
-//    vector<Mat> *seq = str2ptr<vector<Mat>>(add_seq);
-//}
+/* gradient_image(+IMGSEQ, +IMG, -Magnitude, -Direction)
+ * get gradient of local area of point [X, Y, Z] in image sequence IMGSEQ
+ */
+PREDICATE(gradient_image, 4) {
+    char *p1 = (char*) A1;
+    const string add_seq(p1);
+    vector<Mat> *seq = str2ptr<vector<Mat>>(add_seq);
+
+    int img = (int) A2;
+
+    Mat src = seq->at(img);
+
+    int scale = 1;
+    int delta = 0;
+    int ddepth = CV_64F;
+
+    Mat grad_x, grad_y;
+    Mat *grad = new Mat(src.size(), ddepth);
+    Mat *ang = new Mat(src.size(), ddepth);
+
+    Sobel(src, grad_x, ddepth, 1, 0, 3, scale, delta, BORDER_DEFAULT);
+    Sobel(src, grad_y, ddepth, 0, 1, 3, scale, delta, BORDER_DEFAULT);
+    cout << "Gradients Calculated" << endl;
+    addWeighted(grad_x, 0.5, grad_y, 0.5, 0, *grad);
+    cout << "Magnitudes Calculated" << endl;
+    phase(grad_x, grad_y, *ang);
+    cout << "Angles Calculated" << endl;
+
+    string add_grad = ptr2str(grad);
+    A3 = PlTerm(add_grad.c_str());
+    string add_ang = ptr2str(ang);
+    A4 = PlTerm(add_ang.c_str());
+    return TRUE;
+}
 
 /* resize_image(+IMGSEQ, +IMG, +[TARGET_SIZE_X, TARGET_SIZE_Y], -[RESIZED_IMAGE])
  * Resize an image
  */
 PREDICATE(resize_image, 4) {
     char *p1 = (char*) A1;
-    int img = (int) A2;
-
-    // get image sequence and compute variance
     const string add_seq(p1);
     vector<Mat> *seq = str2ptr<vector<Mat>>(add_seq);
+
+    int img = (int) A2;
     vector<int> target_sz = list2vec<int>(A3, 2);
 
     int ddepth = CV_16S;
