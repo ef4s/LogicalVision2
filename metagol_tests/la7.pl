@@ -14,15 +14,15 @@ func_test(Atom,PS,G):-
 
 %% PREDICATES TO BE USED IN THE LEARNING
 prim(touched/2).
-prim(linked/2).
+%prim(linked/2).
 %prim(missile/1).
 prim(pix/1).
-%prim(destroyed/1).
+prim(destroyed/2).
 
 %% METARULES
-metarule([P,Q],([P,A]:-[[Q,A]])).
-metarule([P,Q],([P,A]:-[[Q,A,B]])).
-metarule([P,Q,R],([P,A]:-[[Q,A,C],[R,C]])).
+%metarule([P,Q],([P,A]:-[[Q,A]])).
+%metarule([P,Q],([P,A]:-[[Q,A,B]])).
+%metarule([P,Q,R],([P,A]:-[[Q,A,C],[R,C]])).
 
 %metarule([P,Q],([P,A,B]:-[[Q,A]])).
 metarule([P,Q],([P,A,B]:-[[Q,A,B]])).
@@ -31,7 +31,8 @@ metarule([P,Q],([P,A,B]:-[[Q,A,B]])).
 %metarule([P,Q,A,B],([P,A,B]:-[[Q,A,B]])).
 
 % Chain Rule
-metarule([P,Q,R],([P,A,B]:-[[Q,A,C],[R,C,B]])).
+%metarule([P,Q,R],([P,A,B]:-[[Q,A,C],[R,C,B]])).
+%metarule([P,Q,R],([P,A,B]:-[[Q,A,C],[R,B,C]])).
 %metarule([P,Q,R,B],([P,A,B]:-[[Q,A,C],[R,C,B]])).
 %metarule([P,Q,R,A],([P,A,B]:-[[Q,A,C],[R,C,B]])).
 %metarule([P,Q,R,A,B],([P,A,B]:-[[Q,A,C],[R,C,B]])).
@@ -45,8 +46,8 @@ metarule([P,Q,A,B],([P,A,B]:-[[Q,A,C],@term_gt(A,C),[P,C,B],@term_gt(C,B)])).
 %metarule([P,Q,A,B],([P,[A|B]]:-[[Q,A,C],@term_gt(A,C),[P,C,B],@term_gt(C,B)])). 
 */
 a :-
-  Pos = [destroyed(b,c), destroyed(a,c)],
-  Neg = [],
+  Pos = [linked(a,b)],
+  Neg = [],% [linked(b,c)],
   learn(Pos,Neg,H),
   pprint(H).
 
@@ -54,9 +55,11 @@ a :-
 %% FIRST-ORDER BACKGROUND KNOWLEDGE
 pix(a). 
 pix(b). 
-missile(c). 
-touched(b,c).
-linked(a,b).
+pix(c). 
+missile(d). 
+touched(b,d).
+destroyed(b,d).
+destroyed(a,d).
 %destroyed(X):-pix(X),missile(Y),touched(X,Y).
 %destroyed(X):-pix(X),destroyed(Y),linked(X,Y).
 
