@@ -15,8 +15,6 @@ run_test(W):-
     diff_seq(Img_seq_add, Diff_seq_add),
     resize_image(Diff_seq_add, 1234, [20, 20], Resize_img_add),
     gradient_image(Diff_seq_add, 1234, Grad_add, Angle_add),
-    write(Grad_add),
-    write(Angle_add),
     showimg_win(Resize_img_add, resized).
 %    sample_point(Img_seq_add, [1, 1, 1], VAR),
 %    write(VAR),
@@ -27,5 +25,23 @@ run_test(W):-
 %    draw_points(Img_seq_add, Pts, 'r'),
 %    draw_line(Img_seq_add, [1, 1, 1], [100, 100, 100], 'red'),
 %    showvid_win(Img_seq_add, debug).
+
+
+find_shapes(Diff_seq_add, [Resize_x, Resize_y], Shapes):-
+	resize_image(Diff_seq_add, 1234, [20, 20], Resize_img_add),
+	gradient_image(Diff_seq_add, 1234, Grad_add, Angle_add),
+	findall(Shape, find_shape(Grad_add, Angle_add, Shape), Shapes).
+
+find_shape(Grad_add, Angle_add, Shape):-
+	random_point_on_line(Point),
+	matching_point(Point, Grad_add, Angle_add, Point2),
+	prove_line(Point, Point2)
+	
+	
+
+sample_line_to_point(+Img, +[Start_x, Start_y, Dir], +Threshold, -Point):-
+	
+extend_point_to_line(+Img, +Point, +Grad, +Dir, -Line)
+connect_lines(+Lines, -Shape)
 
 

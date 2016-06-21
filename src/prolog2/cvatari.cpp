@@ -169,11 +169,11 @@ PREDICATE(gradient_image, 4) {
 
     Sobel(src, grad_x, ddepth, 1, 0, 3, scale, delta, BORDER_DEFAULT);
     Sobel(src, grad_y, ddepth, 0, 1, 3, scale, delta, BORDER_DEFAULT);
-    cout << "Gradients Calculated" << endl;
+//    cout << "Gradients Calculated" << endl;
     addWeighted(grad_x, 0.5, grad_y, 0.5, 0, *grad);
-    cout << "Magnitudes Calculated" << endl;
+//    cout << "Magnitudes Calculated" << endl;
     phase(grad_x, grad_y, *ang);
-    cout << "Angles Calculated" << endl;
+//    cout << "Angles Calculated" << endl;
 
     string add_grad = ptr2str(grad);
     A3 = PlTerm(add_grad.c_str());
@@ -230,3 +230,63 @@ PREDICATE(diff_seq, 2) {
     cout << add.c_str() << endl;
     return A2 = PlTerm(add.c_str());
 }
+
+///* sample_line_to_point(+IMGSEQ, +POINT, +DIR, +BOUND, +THRESHOLD, -Point)
+// * Sample along a line until you reach the first point with gradient above threshold
+// * @IMGSEQ = Address of image sequence
+// * @POINT = [X, Y, Z]: a point that the line crosses
+// * @DIR = [DX, DY, DZ]: direction of the line
+// * @BOUND = [W, H, D]: size limit of the video (width, height and duration),
+// *                     usually obtained from 'size_3d(VID, W, H, D)'
+// * @POINT: returned point
+// */
+//PREDICATE(sample_line_to_point, 6) {
+//    char *p1 = (char*) A1;
+//    const string add_seq(p1); // address
+//    vector<Mat> *seq = str2ptr<vector<Mat>>(add_seq);
+//
+//    vector<int> s_vec = list2vec<int>(A2, 3);
+//    Scalar start(s_vec[0], s_vec[1], s_vec[2]);
+//    Scalar current(s_vec[0], s_vec[1], s_vec[2]);
+//
+//    s_vec = list2vec<int>(A3, 3);
+//    Scalar dir(s_vec[0], s_vec[1], s_vec[2]);
+//
+//    s_vec = list2vec<int>(A4, 3);
+//    Scalar bound(s_vec[0], s_vec[1], s_vec[2]);
+//
+//    //Follow along the line until you find a gradient that exceeds threshold
+//    double grad = 0;
+//    double thresh = (double) A5;
+//
+////    while(grad < thresh || (current[0]){
+////
+////
+////    }
+//
+//
+//}
+
+
+/* fit_rectangle(+POINTS, -RECTANGLE)
+ * Sample along a line until you reach the first point with gradient above threshold
+ * @POINT = [X, Y, Z]: a list of points of interest
+ * @RECTANGLE = the rectangle that closes the set of points
+ */
+PREDICATE(fit_rectangle, 2) {
+
+    vector<Scalar> points = point_list2vec(A1);
+    RotatedRect box = minAreaRect(Mat(points));
+    vector<double> box_param = (box.center, box.size[0], box.size[1], box.angle);
+
+    return A2  = vec2list<double>(box_param);
+}
+
+
+/* points_of_colour(+POINTS, +COLOUR, -SUBSET_POINTS)
+ * Select the subset of points that share a colour
+ * @POINTS = [[X, Y]]: a list of points of interest
+ * @RECTANGLE = the rectangle that closes the set of points
+ */
+PREDICATE()
+
