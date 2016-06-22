@@ -18,6 +18,7 @@ prim(touched/2).
 %prim(missile/1).
 prim(pix/1).
 prim(destroyed/2).
+prim(n_contained/2).
 
 %% METARULES
 %metarule([P,Q],([P,A]:-[[Q,A]])).
@@ -31,8 +32,8 @@ metarule([P,Q],([P,A,B]:-[[Q,A,B]])).
 %metarule([P,Q,A,B],([P,A,B]:-[[Q,A,B]])).
 
 % Chain Rule
-%metarule([P,Q,R],([P,A,B]:-[[Q,A,C],[R,C,B]])).
-%metarule([P,Q,R],([P,A,B]:-[[Q,A,C],[R,B,C]])).
+metarule([P,Q,R],([P,A,B]:-[[Q,A,C],[R,C,B]])).
+metarule([P,Q,R],([P,A,B]:-[[Q,A,C],[R,B,C]])).
 %metarule([P,Q,R,B],([P,A,B]:-[[Q,A,C],[R,C,B]])).
 %metarule([P,Q,R,A],([P,A,B]:-[[Q,A,C],[R,C,B]])).
 %metarule([P,Q,R,A,B],([P,A,B]:-[[Q,A,C],[R,C,B]])).
@@ -47,7 +48,7 @@ metarule([P,Q,A,B],([P,A,B]:-[[Q,A,C],@term_gt(A,C),[P,C,B],@term_gt(C,B)])).
 */
 a :-
   Pos = [linked(a,b)],
-  Neg = [],% [linked(b,c)],
+  Neg = [],
   learn(Pos,Neg,H),
   pprint(H).
 
@@ -60,12 +61,10 @@ missile(d).
 touched(b,d).
 destroyed(b,d).
 destroyed(a,d).
-%destroyed(X):-pix(X),missile(Y),touched(X,Y).
-%destroyed(X):-pix(X),destroyed(Y),linked(X,Y).
 
-% The transition function f, given the new background information, should output the new that a has also been destroyed.
-%f(destroyed(a)):-linked(a,b).
-
+n_contained(X,Y):-
+	bagof(Z, contains(X,Z), ZZ),
+	length(ZZ,Y).
 
 %% FIXES YAP RANDOM BUG
 set_rand:-
