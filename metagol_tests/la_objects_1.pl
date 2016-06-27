@@ -67,7 +67,18 @@ pix(h).
 pix(i).  
 pix(j).  
 pix(k).
-pix(l).        
+pix(l).  
+
+pix(m).  
+pix(n).  
+pix(o).  
+pix(p).  
+
+pix(q).  
+pix(r).  
+pix(s).  
+pix(t).  
+      
 x_loc(a,3).
 y_loc(a,4).
 x_loc(b,4).
@@ -93,24 +104,53 @@ y_loc(k,6).
 x_loc(l,6).
 y_loc(l,6).
 
-%  1,2,3,4,5,6,7,8
-%7 . . . . . . . . 
-%6 . . i j k l . . 
-%5 . . . . . . . . 
-%4 . . a b . . . . 
-%3 . . d c . . . . 
-%2 . . . . . e f g 
-%1 . . . . . h . . 
+x_loc(m,8).
+y_loc(m,7).
+x_loc(n,8).
+y_loc(n,6).
+x_loc(o,8).
+y_loc(o,5).
+x_loc(p,9).
+y_loc(p,6).
+
+x_loc(q,2).
+y_loc(q,9).
+x_loc(r,2).
+y_loc(r,8).
+x_loc(s,1).
+y_loc(s,8).
+x_loc(t,1).
+y_loc(t,7).
+
+%  1,2,3,4,5,6,7,8 9
+%9 . q . . . . . . .
+%8 s r . . . . . . .
+%7 t . . . . . . m .
+%6 . . i j k l . n p
+%5 . . . . . . . o .
+%4 . . a b . . . . .
+%3 . . d c . . . . .
+%2 . . . . . e f g .
+%1 . . . . . h . . .
 
 l_shape(X):-y_adjacent(A,B),x_adjacent(B,C),x_adjacent(C,D), A\=B,A\=C,A\=D,B\=C,B\=D,C\=D, X = [A,B,C,D].
 l_shape(X):-y_adjacent(A,B),y_adjacent(B,C),x_adjacent(C,D), A\=B,A\=C,A\=D,B\=C,B\=D,C\=D, X = [A,B,C,D].
 line(X):-y_adjacent(A,B),y_adjacent(B,C),y_adjacent(C,D), A\=B,A\=C,A\=D,B\=C,B\=D,C\=D, X = [A,B,C,D].
 line(X):-x_adjacent(A,B),x_adjacent(B,C),x_adjacent(C,D), A\=B,A\=C,A\=D,B\=C,B\=D,C\=D,  X = [A,B,C,D].
-square(X):-x_adjacent(A,B),y_adjacent(A,C),x_adjacent(C,D), A\=B,A\=C,A\=D,B\=C,B\=D,C\=D, X = [A,B,C,D].
+square(X):-x_adjacent(A,B),y_adjacent(A,C),x_adjacent(C,D), y_adjacent(B,D), A\=B,A\=C,A\=D,B\=C,B\=D,C\=D, X = [A,B,C,D].
+t_shape(X):-x_adjacent(A,B),x_adjacent(B,C),y_adjacent(B,D), A\=B,A\=C,A\=D,B\=C,B\=D,C\=D, X = [A,B,C,D].
+t_shape(X):-y_adjacent(A,B),y_adjacent(B,C),x_adjacent(B,D), A\=B,A\=C,A\=D,B\=C,B\=D,C\=D, X = [A,B,C,D].
+z_shape(X):-y_adjacent(A,B),x_adjacent(B,C),y_adjacent(C,D), not(x_adjacent(A,D)), A\=B,A\=C,A\=D,B\=C,B\=D,C\=D, X = [A,B,C,D].
+z_shape(X):-x_adjacent(A,B),y_adjacent(B,C),x_adjacent(C,D), not(y_adjacent(A,D)), A\=B,A\=C,A\=D,B\=C,B\=D,C\=D, X = [A,B,C,D].
 
-object(X):-l_shape(X).
-object(X):-line(X).
-object(X):-square(X).
+
+object(Y):-l_shape(Y),assert(p_l_shape(Y)).%, retract_in(Y).
+object(Y):-line(Y),assert(p_line(Y)).%, retract_in(Y).
+object(Y):-square(Y),assert(p_square(Y)).%	, retract_in(Y).
+
+retract_pix(H):-retract(pix(H)), retract(y_loc(H,_)), retract(x_loc(X,_)).
+retract_in([H|T]):-retract_pix(H), retract_in(T).
+retract_in([]).
 
 x_adjacent(X,Y):-
 	y_loc(X,Z),
@@ -127,6 +167,8 @@ y_adjacent(X,Y):-
 	y_loc(Y,YY),
 	X \= Y,
 	1 is abs(XY - YY).
+
+b(Objs) :- findall(O, object(O), Objs).
 
 %% FIXES YAP RANDOM BUG
 set_rand:-
