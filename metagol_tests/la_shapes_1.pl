@@ -29,14 +29,15 @@ metarule([P,Q],([P,A]:-[[Q,A,B]])).
 metarule([P,Q,A,B],([P,A]:-[[Q,A,B]])).
 %metarule([P,Q,R],([P,A]:-[[Q,A,C],[R,C]])).
 
-%metarule([P,Q],([P,A,B]:-[[Q,A]])).
+metarule([P,Q],([P,A,B]:-[[Q,A]])).
 %metarule([P,Q],([P,A,B]:-[[Q,A,B]])).
+metarule([P,Q],([P,A,B]:-[[Q,A,C]])).
 %metarule([P,Q,B],([P,A,B]:-[[Q,A,B]])).
 %metarule([P,Q,A],([P,A,B]:-[[Q,A,B]])).
 %metarule([P,Q,A,B],([P,A,B]:-[[Q,A,B]])).
 
 % Chain Rule
-%metarule([P,Q,R],([P,A,B]:-[[Q,A,C],[R,C,B]])).
+metarule([P,Q,R],([P,A,B]:-[[Q,A,C],[R,C,B]])).
 %metarule([P,Q,R],([P,A,B]:-[[Q,A,C],[R,B,C]])).
 %metarule([P,Q,R,B],([P,A,B]:-[[Q,A,C],[R,C,B]])).
 %metarule([P,Q,R,A],([P,A,B]:-[[Q,A,C],[R,C,B]])).
@@ -51,12 +52,13 @@ metarule([P,Q,A,B],([P,A,B]:-[[Q,A,C],@term_gt(A,C),[P,C,B],@term_gt(C,B)])).
 %metarule([P,Q,A,B],([P,[A|B]]:-[[Q,A,C],@term_gt(A,C),[P,C,B],@term_gt(C,B)])). 
 */
 a :-
-  Pos = [square(s1)],
-  Neg = [],
+  Pos = [square(s1, z)],
+  Neg = [square(s2, z)],
   learn(Pos,Neg,H),
   pprint(H).
 
 %% FIRST-ORDER BACKGROUND KNOWLEDGE
+space_filler(z).
 pix(a). 
 pix(b). 
 pix(c). 
