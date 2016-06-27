@@ -15,23 +15,24 @@ func_test(Atom,PS,G):-
 %% PREDICATES TO BE USED IN THE LEARNING
 %prim(contains/2).
 prim(n_contained/2).
-%prim(adjacent/2).
-%prim(left_of/2).
-%prim(right_of/2).
-%prim(above/2).
-%prim(below/2).
-%prim(x_aligned/2).
-%prim(y_aligned/2).
+prim(adjacent/2).
+prim(left_of/2).
+prim(right_of/2).
+prim(above/2).
+prim(below/2).
+prim(x_aligned/2).
+prim(y_aligned/2).
 
 %% METARULES
 metarule([P,Q],([P,A]:-[[Q,A]])).
 metarule([P,Q],([P,A]:-[[Q,A,B]])).
-metarule([P,Q,A,B],([P,A]:-[[Q,A,B]])).
+metarule([P,Q,B],([P,A]:-[[Q,A,B]])).
 %metarule([P,Q,R],([P,A]:-[[Q,A,C],[R,C]])).
 
 metarule([P,Q],([P,A,B]:-[[Q,A]])).
 %metarule([P,Q],([P,A,B]:-[[Q,A,B]])).
 metarule([P,Q],([P,A,B]:-[[Q,A,C]])).
+metarule([P,Q,C],([P,A,B]:-[[Q,A,C]])).
 %metarule([P,Q,B],([P,A,B]:-[[Q,A,B]])).
 %metarule([P,Q,A],([P,A,B]:-[[Q,A,B]])).
 %metarule([P,Q,A,B],([P,A,B]:-[[Q,A,B]])).
@@ -66,6 +67,7 @@ pix(d).
 pix(e). 
 pix(f). 
 pix(g).  
+pix(h).  
 contains(s1,a).
 contains(s1,b).
 contains(s1,c).
@@ -73,6 +75,7 @@ contains(s1,d).
 contains(s2,e).
 contains(s2,f).
 contains(s2,g).
+contains(s2,h).
 x_loc(a,3).
 y_loc(a,4).
 x_loc(b,4).
@@ -85,14 +88,16 @@ x_loc(e,6).
 y_loc(e,2).
 x_loc(f,7).
 y_loc(f,2).
-x_loc(g,6).
-y_loc(g,1).
+x_loc(g,8).
+y_loc(g,2).
+x_loc(h,6).
+y_loc(h,1).
 
 %  1,2,3,4,5,6,7,8
 %4 . . a,b . . . . 
 %3 . . d,c . . . . 
-%2 . . . . . e f . 
-%1 . . . . . g . . 
+%2 . . . . . e f g 
+%1 . . . . . h . . 
 
 n_adjacent(X,Y):-
 	bagof(Z, adjacent(X,Z), ZZ),

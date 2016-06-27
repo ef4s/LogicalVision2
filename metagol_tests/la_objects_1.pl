@@ -13,25 +13,19 @@ func_test(Atom,PS,G):-
 
 
 %% PREDICATES TO BE USED IN THE LEARNING
-%prim(contains/2).
-prim(n_contained/2).
-%prim(adjacent/2).
-%prim(left_of/2).
-%prim(right_of/2).
-%prim(above/2).
-%prim(below/2).
-%prim(x_aligned/2).
-%prim(y_aligned/2).
+prim(x_adjacent/2).
+prim(y_adjacent/2).
 
 %% METARULES
 metarule([P,Q],([P,A]:-[[Q,A]])).
 metarule([P,Q],([P,A]:-[[Q,A,B]])).
-metarule([P,Q,A,B],([P,A]:-[[Q,A,B]])).
+metarule([P,Q,B],([P,A]:-[[Q,A,B]])).
 %metarule([P,Q,R],([P,A]:-[[Q,A,C],[R,C]])).
 
 metarule([P,Q],([P,A,B]:-[[Q,A]])).
 %metarule([P,Q],([P,A,B]:-[[Q,A,B]])).
 metarule([P,Q],([P,A,B]:-[[Q,A,C]])).
+metarule([P,Q,C],([P,A,B]:-[[Q,A,C]])).
 %metarule([P,Q,B],([P,A,B]:-[[Q,A,B]])).
 %metarule([P,Q,A],([P,A,B]:-[[Q,A,B]])).
 %metarule([P,Q,A,B],([P,A,B]:-[[Q,A,B]])).
@@ -58,6 +52,9 @@ a :-
   pprint(H).
 
 %% FIRST-ORDER BACKGROUND KNOWLEDGE
+:- dynamic pix/1.
+:- dynamic x_loc/2.
+:- dynamic y_loc/2.
 space_filler(z).
 pix(a). 
 pix(b). 
@@ -66,13 +63,11 @@ pix(d).
 pix(e). 
 pix(f). 
 pix(g).  
-contains(s1,a).
-contains(s1,b).
-contains(s1,c).
-contains(s1,d).
-contains(s2,e).
-contains(s2,f).
-contains(s2,g).
+pix(h).
+pix(i).  
+pix(j).  
+pix(k).
+pix(l).        
 x_loc(a,3).
 y_loc(a,4).
 x_loc(b,4).
@@ -85,70 +80,53 @@ x_loc(e,6).
 y_loc(e,2).
 x_loc(f,7).
 y_loc(f,2).
-x_loc(g,6).
-y_loc(g,1).
+x_loc(g,8).
+y_loc(g,2).
+x_loc(h,6).
+y_loc(h,1).
+x_loc(i,3).
+y_loc(i,6).
+x_loc(j,4).
+y_loc(j,6).
+x_loc(k,5).
+y_loc(k,6).
+x_loc(l,6).
+y_loc(l,6).
 
 %  1,2,3,4,5,6,7,8
-%4 . . a,b . . . . 
-%3 . . d,c . . . . 
-%2 . . . . . e f . 
-%1 . . . . . g . . 
+%7 . . . . . . . . 
+%6 . . i j k l . . 
+%5 . . . . . . . . 
+%4 . . a b . . . . 
+%3 . . d c . . . . 
+%2 . . . . . e f g 
+%1 . . . . . h . . 
 
-n_adjacent(X,Y):-
-	bagof(Z, adjacent(X,Z), ZZ),
-	length(ZZ,Y).
+l_shape(X):-y_adjacent(A,B),x_adjacent(B,C),x_adjacent(C,D), A\=B,A\=C,A\=D,B\=C,B\=D,C\=D, X = [A,B,C,D].
+l_shape(X):-y_adjacent(A,B),y_adjacent(B,C),x_adjacent(C,D), A\=B,A\=C,A\=D,B\=C,B\=D,C\=D, X = [A,B,C,D].
+line(X):-y_adjacent(A,B),y_adjacent(B,C),y_adjacent(C,D), A\=B,A\=C,A\=D,B\=C,B\=D,C\=D, X = [A,B,C,D].
+line(X):-x_adjacent(A,B),x_adjacent(B,C),x_adjacent(C,D), A\=B,A\=C,A\=D,B\=C,B\=D,C\=D,  X = [A,B,C,D].
+square(X):-x_adjacent(A,B),y_adjacent(A,C),x_adjacent(C,D), A\=B,A\=C,A\=D,B\=C,B\=D,C\=D, X = [A,B,C,D].
 
-n_contained(X,Y):-
-	bagof(Z, contains(X,Z), ZZ),
-	length(ZZ,Y).
+object(X):-l_shape(X).
+object(X):-line(X).
+object(X):-square(X).
 
-adjacent(X,Y):-
+x_adjacent(X,Y):-
+	y_loc(X,Z),
+	y_loc(Y,Z),
 	x_loc(X,XX),
 	x_loc(Y,YX),
 	X \= Y,
 	1 is abs(XX - YX).
 
-adjacent(X,Y):-
+y_adjacent(X,Y):-
+	x_loc(X,Z),
+	x_loc(Y,Z),
 	y_loc(X,XY),
 	y_loc(Y,YY),
 	X \= Y,
 	1 is abs(XY - YY).
-
-left_of(X,Y):-
-	x_loc(X,XX),
-	x_loc(Y,YX),
-	X \= Y,
-	XX < YX.
-
-right_of(X,Y):-
-	x_loc(X,XX),
-	x_loc(Y,YX),
-	X \= Y,
-	XX > YX.
-
-x_aligned(X,Y):-
-	x_loc(X,XX),
-	x_loc(Y,YX),
-	X \= Y,
-	XX = YX.
-
-below(X,Y):-
-	y_loc(X,XY),
-	y_loc(Y,YY),
-	X \= Y,
-	XY < YY.
-
-above(X,Y):-
-	y_loc(X,XY),
-	y_loc(Y,YY),
-	X \= Y,
-	XY > YY.
-
-y_aligned(X,Y):-
-	y_loc(X,XY),
-	y_loc(Y,YY),
-	X \= Y,
-	XY = YY.
 
 %% FIXES YAP RANDOM BUG
 set_rand:-
