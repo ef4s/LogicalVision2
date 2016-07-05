@@ -133,16 +133,15 @@ y_loc(t,7).
 %2 . . . . . e f g .
 %1 . . . . . h . . .
 
-l_shape(X):-y_adjacent(A,B),x_adjacent(B,C),x_adjacent(C,D), A\=B,A\=C,A\=D,B\=C,B\=D,C\=D, X = [A,B,C,D].
-l_shape(X):-y_adjacent(A,B),y_adjacent(B,C),x_adjacent(C,D), A\=B,A\=C,A\=D,B\=C,B\=D,C\=D, X = [A,B,C,D].
-line(X):-y_adjacent(A,B),y_adjacent(B,C),y_adjacent(C,D), A\=B,A\=C,A\=D,B\=C,B\=D,C\=D, X = [A,B,C,D].
-line(X):-x_adjacent(A,B),x_adjacent(B,C),x_adjacent(C,D), A\=B,A\=C,A\=D,B\=C,B\=D,C\=D,  X = [A,B,C,D].
-square(X):-x_adjacent(A,B),y_adjacent(A,C),x_adjacent(C,D), y_adjacent(B,D), A\=B,A\=C,A\=D,B\=C,B\=D,C\=D, X = [A,B,C,D].
-t_shape(X):-x_adjacent(A,B),x_adjacent(B,C),y_adjacent(B,D), A\=B,A\=C,A\=D,B\=C,B\=D,C\=D, X = [A,B,C,D].
-t_shape(X):-y_adjacent(A,B),y_adjacent(B,C),x_adjacent(B,D), A\=B,A\=C,A\=D,B\=C,B\=D,C\=D, X = [A,B,C,D].
-z_shape(X):-y_adjacent(A,B),x_adjacent(B,C),y_adjacent(C,D), not(x_adjacent(A,D)), A\=B,A\=C,A\=D,B\=C,B\=D,C\=D, X = [A,B,C,D].
-z_shape(X):-x_adjacent(A,B),y_adjacent(B,C),x_adjacent(C,D), not(y_adjacent(A,D)), A\=B,A\=C,A\=D,B\=C,B\=D,C\=D, X = [A,B,C,D].
-
+l_shape(X):-y_adjacent(A,B),x_adjacent(B,C),x_adjacent(C,D), all_unique([A,B,C,D]), X = [A,B,C,D].
+l_shape(X):-y_adjacent(A,B),y_adjacent(B,C),x_adjacent(C,D), all_unique([A,B,C,D]), X = [A,B,C,D].
+line(X):-y_adjacent(A,B),y_adjacent(B,C),y_adjacent(C,D), all_unique([A,B,C,D]), X = [A,B,C,D].
+line(X):-x_adjacent(A,B),x_adjacent(B,C),x_adjacent(C,D), all_unique([A,B,C,D]),  X = [A,B,C,D].
+square(X):-x_adjacent(A,B),y_adjacent(A,C),x_adjacent(C,D), y_adjacent(B,D), all_unique([A,B,C,D]), X = [A,B,C,D].
+t_shape(X):-x_adjacent(A,B),x_adjacent(B,C),y_adjacent(B,D), all_unique([A,B,C,D]), X = [A,B,C,D].
+t_shape(X):-y_adjacent(A,B),y_adjacent(B,C),x_adjacent(B,D), all_unique([A,B,C,D]), X = [A,B,C,D].
+z_shape(X):-y_adjacent(A,B),x_adjacent(B,C),y_adjacent(C,D), not(x_adjacent(A,D)), all_unique([A,B,C,D]), X = [A,B,C,D].
+z_shape(X):-x_adjacent(A,B),y_adjacent(B,C),x_adjacent(C,D), not(y_adjacent(A,D)), all_unique([A,B,C,D]), X = [A,B,C,D].
 
 object(Y):-l_shape(Y),assert(p_l_shape(Y)).%, retract_in(Y).
 object(Y):-line(Y),assert(p_line(Y)).%, retract_in(Y).
@@ -151,6 +150,9 @@ object(Y):-square(Y),assert(p_square(Y)).%	, retract_in(Y).
 retract_pix(H):-retract(pix(H)), retract(y_loc(H,_)), retract(x_loc(X,_)).
 retract_in([H|T]):-retract_pix(H), retract_in(T).
 retract_in([]).
+
+all_unique([H|T]):-not(member(H,T)),all_unqiue(T).
+all_unique([]).
 
 x_adjacent(X,Y):-
 	y_loc(X,Z),
