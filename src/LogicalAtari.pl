@@ -36,7 +36,8 @@ find_shape(Grad_add, Angle_add, Shape):-
 	random_point_on_line(Point),
 	matching_point(Point, Grad_add, Angle_add, Point2),
 	prove_line(Point, Point2).
-	
+
+line(Start,End,Img):-noisy_line(Start,End,Img).
 
 line(Start,End, Img):-
     similar_grad(Start,End, Img), 

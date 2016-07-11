@@ -233,7 +233,7 @@ PREDICATE(diff_seq, 2) {
 
 
 
-/* sample_point(+IMGSEQ, +@DIRSEQ, +POINT, -GRAD)
+/* sample_point(+IMGSEQ, +DIRSEQ, +POINT, -GRAD)
 * Sample a point and return a gradient object
 * @MAGSEQ = Address of the gradient magnitude sequence
 * @DIRSEQ = Address of the gradient direction sequence
@@ -249,14 +249,13 @@ PREDICATE(sample_point, 4) {
     const string dir_seq_add(p2); 
     vector<Mat> *dir_seq = str2ptr<vector<Mat>>(dir_seq_add);
 
-    loc = list2vec<int>(A3, 3);
+    vector<int> loc = list2vec<int>(A3, 3);
 
     bool dir = dir_seq->at(loc[2])[loc[0]][loc[1]];
     double mag = mag_seq->at(loc[2])[loc[0]][loc[1]];
 
 	return A4 = PlTerm(grad, dir, mag);
 }
-
 
 ///* sample_line_to_point(+IMGSEQ, +POINT, +DIR, +BOUND, +THRESHOLD, -Point)
 // * Sample along a line until you reach the first point with gradient above threshold
@@ -310,10 +309,58 @@ PREDICATE(fit_rectangle, 2) {
 }
 
 
-/* points_of_colour(+POINTS, +COLOUR, -SUBSET_POINTS)
- * Select the subset of points that share a colour
+/* points_of_colour(+START, +END, +IMGSEQ, +DIRSEQ)
+ * Samples points and checks if they're correct with a set probabilty
  * @POINTS = [[X, Y]]: a list of points of interest
  * @RECTANGLE = the rectangle that closes the set of points
  */
-PREDICATE()
+PREDICATE(noisy_line, 4){
+    vector<int> start = list2vec<int>(A1, 3);
+    vector<int> end = list2vec<int>(A2, 3);
+    vector<int> diff = start - end;
+
+    char *p1 = (char*) A3;
+    const string mag_seq_add(p1); 
+    vector<Mat> *mag_seq = str2ptr<vector<Mat>>(mag_seq_add);
+
+    char *p2 = (char*) A4;
+    const string dir_seq_add(p2); 
+    vector<Mat> *dir_seq = str2ptr<vector<Mat>>(dir_seq_add);
+
+    bool dir_start = dir_seq->at(start[2])[start[0]][start[1]];
+    double mag_start = mag_seq->at(start[2])[start[0]][start[1]];
+
+
+    //Sample n points along the target line
+    //from k subsets of size q, if the number of sucesses is above p then return true
+    int len = diff[0] + diff[1] + diff[2];
+    len = math.sqrt(len);
+    
+    double THRESHOLD = 0.4;
+    int K = math.min(10, len);
+    int q = K * 0.9;
+    int p = 0;
+   
+    
+    for(int i = 0; i < K, i++){
+        r = rand.next_int(len);
+        vector<int> loc = start;
+        for(int i = 0; i < 3; i++){
+            loc[i] += r * (diff[i] / len);
+        }      
+        
+        bool dir = dir_seq->at(loc[2])[loc[0]][loc[1]];
+        double mag = mag_seq->at(loc[2])[loc[0]][loc[1]];
+        
+        if((dir == dit_start) && (mag > THRESHOLD)){
+            p++;
+        }
+    }
+    
+    if(p >= q){
+        return true;
+    }else{
+        return false;
+    }   
+}
 
