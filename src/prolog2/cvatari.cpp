@@ -231,6 +231,33 @@ PREDICATE(diff_seq, 2) {
     return A2 = PlTerm(add.c_str());
 }
 
+
+
+/* sample_point(+IMGSEQ, +@DIRSEQ, +POINT, -GRAD)
+* Sample a point and return a gradient object
+* @MAGSEQ = Address of the gradient magnitude sequence
+* @DIRSEQ = Address of the gradient direction sequence
+* @POINT = [X, Y, Z]: a point to sample
+* @GRAD: returned point
+*/
+PREDICATE(sample_point, 4) {
+    char *p1 = (char*) A1;
+    const string mag_seq_add(p1); 
+    vector<Mat> *mag_seq = str2ptr<vector<Mat>>(mag_seq_add);
+
+    char *p2 = (char*) A2;
+    const string dir_seq_add(p2); 
+    vector<Mat> *dir_seq = str2ptr<vector<Mat>>(dir_seq_add);
+
+    loc = list2vec<int>(A3, 3);
+
+    bool dir = dir_seq->at(loc[2])[loc[0]][loc[1]];
+    double mag = mag_seq->at(loc[2])[loc[0]][loc[1]];
+
+	return A4 = PlTerm(grad, dir, mag);
+}
+
+
 ///* sample_line_to_point(+IMGSEQ, +POINT, +DIR, +BOUND, +THRESHOLD, -Point)
 // * Sample along a line until you reach the first point with gradient above threshold
 // * @IMGSEQ = Address of image sequence

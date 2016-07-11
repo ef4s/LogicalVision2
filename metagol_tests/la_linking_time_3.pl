@@ -163,6 +163,9 @@ create_obj(X,Y):-
 	linked(X,Y),
 	assert_new_object(X,Y).	
 
+create_obj(X,Y):-
+			
+
 assert_new_object(X,Y):-
 	x_loc(X,XX),
 	x_loc(Y,YX),
