@@ -309,7 +309,7 @@ PREDICATE(fit_rectangle, 2) {
 }
 
 
-/* points_of_colour(+START, +END, +IMGSEQ, +DIRSEQ)
+/* noisy_line(+START, +END, +IMGSEQ, +DIRSEQ)
  * Samples points and checks if they're correct with a set probabilty
  * @POINTS = [[X, Y]]: a list of points of interest
  * @RECTANGLE = the rectangle that closes the set of points
@@ -336,11 +336,11 @@ PREDICATE(noisy_line, 4){
     int len = diff[0] + diff[1] + diff[2];
     len = math.sqrt(len);
     
-    double THRESHOLD = 0.4;
-    int K = math.min(10, len);
-    int q = K * 0.9;
+    double EPSILON = 0.1;
+    double NOISE_ESTIMATE = 0.2;
+    int K = len * (EPSILON / NOISE_ESTIMATE);  
+    int q = K * (1 - NOISE_ESTIMATE);
     int p = 0;
-   
     
     for(int i = 0; i < K, i++){
         r = rand.next_int(len);
@@ -362,5 +362,116 @@ PREDICATE(noisy_line, 4){
     }else{
         return false;
     }   
+}
+
+/* noisy_extend_line(+START, +END, +IMGSEQ, +DIRSEQ, +MAX_SIZE, -NEW_START, -NEW_END)
+ * Samples points and checks if they're correct with a set probabilty
+ * @POINTS = [[X, Y]]: a list of points of interest
+ * @RECTANGLE = the rectangle that closes the set of points
+ */
+PREDICATE(noisy_extend_line, 4){
+    vector<int> start = list2vec<int>(A1, 3);
+    vector<int> end = list2vec<int>(A2, 3);
+    vector<int> diff = start - end;
+    int len = diff[0] + diff[1] + diff[2];
+    len = math.sqrt(len);
+
+    char *p1 = (char*) A3;
+    const string mag_seq_add(p1); 
+    vector<Mat> *mag_seq = str2ptr<vector<Mat>>(mag_seq_add);
+
+    char *p2 = (char*) A4;
+    const string dir_seq_add(p2); 
+    vector<Mat> *dir_seq = str2ptr<vector<Mat>>(dir_seq_add);
+
+    bool dir_start = dir_seq->at(start[2])[start[0]][start[1]];
+    double mag_start = mag_seq->at(start[2])[start[0]][start[1]];
+
+
+    //Sample n points along the target line
+    //from k subsets of size q, if the number of sucesses is above p then return true
+    double EPSILON = 0.1;
+    double NOISE_ESTIMATE = 0.2;
+    int K = len * (EPSILON / NOISE_ESTIMATE);  
+    int q = K * (1 - NOISE_ESTIMATE);
+    int p = 0;
+    
+    //use a window, stop when it falls to below the target value
+    bool valid = true;
+    vector<int>new_start = list2vec<int>(A1, 3);
+    vector<bool> valid_counts(K);
+    
+    for(int k = 0; k < K; k++){
+        //cycle through one step at a time
+        for(int j = 0; j < 3; j++){
+            new_start[i] += (k - (K / 2)) * (diff[j] / len);
+        }
+        
+        bool dir = dir_seq->at(loc[2])[loc[0]][loc[1]];
+        double mag = mag_seq->at(loc[2])[loc[0]][loc[1]];
+        
+        if((dir == dit_start) && (mag > THRESHOLD)){
+            p++;
+            valid_counts[k] = true;
+        }else{
+            valid_counts[k] = false;
+        }
+    }
+    
+    int i = 1;
+    while(valid){
+        //cycle through one step at a time
+        for(int j = 0; j < 3; j++){
+            new_start[i] += i * (diff[j] / len);
+        }
+        
+        bool dir = dir_seq->at(loc[2])[loc[0]][loc[1]];
+        double mag = mag_seq->at(loc[2])[loc[0]][loc[1]];
+        
+        bool new_valid_point = false;
+        if((dir == dit_start) && (mag > THRESHOLD)){
+            p++;
+            new_valid_point = true;
+        }
+        if(!valid_counts[i % K] && new_valid_point){
+            p++;
+        }else{
+            p--;
+        }
+        
+        valid_counts[i % K] = new_valid_point;
+        
+        valid = p > q;
+    }
+    // The terminal new_start value is the best edge estimate
+    
+    bool valid = true;
+    vector<int>new_end = list2vec<int>(A1, 3);
+    vector<bool>valid_counts(K);
+    while(valid){
+        //cycle through one step at a time
+        for(int j = 0; j < 3; j++){
+            new_start[i] += i * (diff[j] / len);
+        }
+        
+        bool dir = dir_seq->at(loc[2])[loc[0]][loc[1]];
+        double mag = mag_seq->at(loc[2])[loc[0]][loc[1]];
+        
+        bool new_valid_point = false;
+        if((dir == dit_start) && (mag > THRESHOLD)){
+            p++;
+            new_valid_point = true;
+        }
+        if(!valid_counts[i % K] && new_valid_point){
+            p++;
+        }else{
+            p--;
+        }
+        
+        valid_counts[i % K] = new_valid_point;
+        
+        valid = p > q;
+    }
+    
 }
 

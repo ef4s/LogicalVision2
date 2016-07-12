@@ -36,22 +36,38 @@ find_shape(Grad_add, Angle_add, Shape):-
 	random_point_on_line(Point),
 	matching_point(Point, Grad_add, Angle_add, Point2),
 	prove_line(Point, Point2).
+	
+find_square(Grad_add,Angle_add,Square):-
+    corner(C1,Grad_add,Angle_add),
+    corner(C2,Grad_add,Angle_add),
+    line(C1,C2,Grad_add,Angle_add),
+    corner(C3,Grad_add,Angle_add),
+    line(C2,C3,Grad_add,Angle_add),
+    corner(C4,Grad_add,Angle_add),
+    line(C3,C4,Grad_add,Angle_add),
+    line(C4,C1,Grad_add,Angle_add).
 
-line(Start,End,Img):-noisy_line(Start,End,Img).
+corner(C,Grad_add,Angle_add):-
+    line(C,C1,Grad_add,Angle_add),
+    line(C,C2,Grad_add,Angle_add),
+    not(similar_grad(C1,C2,Grad_add,Angle_add)).    
 
-line(Start,End, Img):-
-    similar_grad(Start,End, Img), 
-    adjacent(Start,End, Img).
+line(Start,End,Grad_add,Angle_add):-
+    similar_grad(Start,End,Grad_add,Angle_add), 
+    adjacent(Start,End,Grad_add,Angle_add).
     
-line(Start,End, Img):-
-    similar_grad(Start,End, Img,Threshold), 
-    sample_between(Start,End, Img), 
-    line(Start, C, Img), 
-    line(C,End, Img).
+line(Start,End,Grad_add,Angle_add):-
+    similar_grad(Start,End,Grad_add,Angle_add,Threshold), 
+    sample_between(Start,End,Grad_add,Angle_add), 
+    line(Start,C,Grad_add,Angle_add), 
+    line(C,End,Grad_add,Angle_add).
 
-similar_grad(X,Y,Img,Threshold):-
-    sample_point(X, Img, gradient(Dir, X_mag)),
-    sample_point(Y, Img, gradient(Dir, Y_mag)), % Directions should be the same
+line(Start,End,Grad_add,Angle_add):-
+    noisy_line(Start,End,Grad_add,Angle_add).
+
+similar_grad(X,Y,Grad_add,Angle_add,Threshold):-
+    sample_point(X,Grad_add,Angle_add,gradient(Dir, X_mag)),
+    sample_point(Y,Grad_add,Angle_add,gradient(Dir,Y_mag)), % Directions should be the same
     Z is abs(X_mag - Y_mag),
     Z <  Threshold.
 
