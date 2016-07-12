@@ -29,7 +29,6 @@ LDFLAGS_ARMA = -larmadillo
 CXXFLAGS_QT = `pkg-config --cflags Qt5Gui`
 LDFLAGS_QT = `pkg-config --libs Qt5Gui`
 
-<<<<<<< HEAD:src/prolog2/Makefile
 all:cvio.so cvsampler.so cvdraw.so cvatari.so
 	mv *.so $(LIBSDIR)/
 

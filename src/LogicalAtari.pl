@@ -62,8 +62,9 @@ line(Start,End,Grad_add,Angle_add):-
     line(Start,C,Grad_add,Angle_add), 
     line(C,End,Grad_add,Angle_add).
 
-line(Start,End,Grad_add,Angle_add):-
-    noisy_line(Start,End,Grad_add,Angle_add).
+line(New_Start,New_End,Grad_add,Angle_add):-
+    noisy_line(Start,End,Grad_add,Angle_add),
+    noisy_extend_line(Start,End,Grad_add,Angle_add, 0.5, New_Start, New_End).
 
 similar_grad(X,Y,Grad_add,Angle_add,Threshold):-
     sample_point(X,Grad_add,Angle_add,gradient(Dir, X_mag)),
