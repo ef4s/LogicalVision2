@@ -29,8 +29,10 @@ LDFLAGS_ARMA = -larmadillo
 CXXFLAGS_QT = `pkg-config --cflags Qt5Gui`
 LDFLAGS_QT = `pkg-config --libs Qt5Gui`
 
+<<<<<<< HEAD:src/prolog2/Makefile
 all:cvio.so cvsampler.so cvdraw.so cvatari.so
-atari:cvatari.so
+	mv *.so $(LIBSDIR)/
+
 
 cvio.so:cvio.o
 	$(CXX) -shared $(LIBS) cvio.o -o cvio.so $(LDFLAGS_CV) $(LDFLAGS_SWI) $(LDFLAGS_QT)
@@ -58,4 +60,5 @@ cvatari.o:
 
 clean:
 	rm -rf *.o *.so
+	rm ../../libs/cv*.so
 
