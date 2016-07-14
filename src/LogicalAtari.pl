@@ -1,7 +1,7 @@
-:-	load_foreign_library(foreign('src/prolog2/cvio.so')),
-	load_foreign_library(foreign('src/prolog2/cvsampler.so')),
-	load_foreign_library(foreign('src/prolog2/cvdraw.so')),
-	load_foreign_library(foreign('src/prolog2/cvatari.so')).
+:-	load_foreign_library(foreign('libs/cvio.so')),
+	load_foreign_library(foreign('libs/cvsampler.so')),
+	load_foreign_library(foreign('libs/cvdraw.so')),
+	load_foreign_library(foreign('libs/cvatari.so')).
 
 
 
@@ -9,7 +9,7 @@
 run_test(W):-
     format(atom(Vid_file), 'data/~w', [W]),
     format(atom(Out_file), 'results/~w_R.pl', [W]),
-    load_video(Vid_file, Vid_add),
+    load_video(Vid_file, Vid_add),    
     video2imgseq(Vid_add, Img_seq_add),
     size_3d(Vid_add, Width, Height, Depth),
     diff_seq(Img_seq_add, Diff_seq_add),
@@ -26,6 +26,22 @@ run_test(W):-
 %    draw_line(Img_seq_add, [1, 1, 1], [100, 100, 100], 'red'),
 %    showvid_win(Img_seq_add, debug).
 
+test_line:-
+    format(atom(Img_file), 'data/~w.jpg', ['line']),
+    load_img(Img_file, Img_add),
+    P1 = [150,203,100],
+    P2 = [450,194,100],
+    draw_points_2d(Img_add, [P1,P2], red),
+    gradient_image(Img_add,Dir_add,Mag_add),
+    print(Dir_add),
+    print(Mag_add),
+    sample_point_image(Dir_add,Mag_add,P1,X),
+%    print(X),
+    showimg_win(Img_add, 'debug'),
+    showimg_win(Dir_add, 'dir'),
+    showimg_win(Mag_add, 'mag'),
+    release_img(Img_add).    
+    
 
 find_shapes(Diff_seq_add, [Resize_x, Resize_y], Shapes):-
 	resize_image(Diff_seq_add, 1234, [20, 20], Resize_img_add),

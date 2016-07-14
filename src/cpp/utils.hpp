@@ -76,7 +76,7 @@ template <class Type>
 Type *element_ptr_in_vector(const vector<Type> *vec, int idx) {
     if (idx < 0 || idx >= (int) vec->size()) {
         cerr << "Element number out of bound!" << endl;
-        return NULL;
+            return NULL;
     }
     return (Type *) &((*vec)[idx]);
 }
