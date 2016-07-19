@@ -201,14 +201,51 @@ PREDICATE(gradient_image, 3) {
     Mat *grad = new Mat(src.size(), ddepth);
     Mat *ang = new Mat(src.size(), ddepth);
 
-    Sobel(src, grad_x, ddepth, 1, 0, 3, scale, delta, BORDER_DEFAULT);
-    Sobel(src, grad_y, ddepth, 0, 1, 3, scale, delta, BORDER_DEFAULT);
-    //    cout << "Gradients Calculated" << endl;
-    addWeighted(grad_x, 0.5, grad_y, 0.5, 0, *grad);
-    //    cout << "Magnitudes Calculated" << endl;
-    phase(grad_x, grad_y, *ang);
-    //    cout << "Angles Calculated" << endl;
+    GaussianBlur( src, src, Size(3,3), 0, 0, BORDER_DEFAULT );
 
+    Mat src_gray;
+    /// Convert it to gray
+    cvtColor( src, src_gray, CV_BGR2GRAY );
+    cout << "Image Converted" << endl;
+    Sobel(src_gray, grad_x, ddepth, 1, 0, 3, scale, delta, BORDER_DEFAULT);
+    Sobel(src_gray, grad_y, ddepth, 0, 1, 3, scale, delta, BORDER_DEFAULT);
+    cout << "Gradients Calculated" << endl;
+//    Sobel(src, grad_x, ddepth, 1, 0, 3, scale, delta, BORDER_DEFAULT);
+//    Sobel(src, grad_y, ddepth, 0, 1, 3, scale, delta, BORDER_DEFAULT);
+//    //    cout << "Gradients Calculated" << endl;
+//    addWeighted(grad_x, 0.5, grad_y, 0.5, 0, *grad);
+//    //    cout << "Magnitudes Calculated" << endl;
+//    phase(grad_x, grad_y, *ang);
+//    //    cout << "Angles Calculated" << endl;
+
+    Mat abs_grad_x, abs_grad_y, grad2;
+    convertScaleAbs( grad_x, abs_grad_x );
+    convertScaleAbs( grad_y, abs_grad_y );
+    addWeighted( abs_grad_x, 0.5, abs_grad_y, 0.5, 0, grad2 );
+    cout << "Gradients Added" << endl;
+
+    char* window_name = "Sobel Demo - Simple Edge Detector";
+    namedWindow( window_name, CV_WINDOW_AUTOSIZE );
+    imshow( window_name, grad2);
+
+// 
+    cout << "Grad 2 has " << grad2.channels() << " channels" << endl;    
+    for(int i = 0; i < grad2.rows; i++){
+        for(int j = 0; j < grad2.cols; j++){
+            int px = (int) grad2.at<uchar>(i,j) ;
+            if(px != NULL){ 
+                    cout << px << ",";
+            }
+        }
+        cout << endl;
+    }
+
+//    char* window_name = "Sobel Demo - Simple Edge Detector";
+//    namedWindow( window_name, CV_WINDOW_AUTOSIZE );
+//    imshow( window_name, grad2);
+
+    waitKey(25);
+    
     string add_grad = ptr2str(grad);
     A2 = PlTerm(add_grad.c_str());
     string add_ang = ptr2str(ang);

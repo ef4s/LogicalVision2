@@ -35,12 +35,12 @@ test_line:-
     gradient_image(Img_add,Dir_add,Mag_add),
     print(Dir_add),
     print(Mag_add),
-    sample_point_image(Dir_add,Mag_add,P1,X),
+    sample_point_image(Dir_add,Mag_add,P1,X).
 %    print(X),
-    showimg_win(Img_add, 'debug'),
-    showimg_win(Dir_add, 'dir'),
-    showimg_win(Mag_add, 'mag'),
-    release_img(Img_add).    
+%    showimg_win(Img_add, 'debug'),
+%    showimg_win(Dir_add, 'dir'),
+%    showimg_win(Mag_add, 'mag'),
+%    release_img(Img_add).    
     
 
 find_shapes(Diff_seq_add, [Resize_x, Resize_y], Shapes):-
