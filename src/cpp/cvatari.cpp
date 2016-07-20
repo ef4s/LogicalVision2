@@ -206,45 +206,46 @@ PREDICATE(gradient_image, 3) {
     Mat src_gray;
     /// Convert it to gray
     cvtColor( src, src_gray, CV_BGR2GRAY );
-    cout << "Image Converted" << endl;
+//    cout << "Image Converted" << endl;
     Sobel(src_gray, grad_x, ddepth, 1, 0, 3, scale, delta, BORDER_DEFAULT);
     Sobel(src_gray, grad_y, ddepth, 0, 1, 3, scale, delta, BORDER_DEFAULT);
-    cout << "Gradients Calculated" << endl;
+//    cout << "Gradients Calculated" << endl;
 //    Sobel(src, grad_x, ddepth, 1, 0, 3, scale, delta, BORDER_DEFAULT);
 //    Sobel(src, grad_y, ddepth, 0, 1, 3, scale, delta, BORDER_DEFAULT);
 //    //    cout << "Gradients Calculated" << endl;
-//    addWeighted(grad_x, 0.5, grad_y, 0.5, 0, *grad);
+    addWeighted(grad_x, 0.5, grad_y, 0.5, 0, *grad);
 //    //    cout << "Magnitudes Calculated" << endl;
-//    phase(grad_x, grad_y, *ang);
+    phase(grad_x, grad_y, *ang);
 //    //    cout << "Angles Calculated" << endl;
 
-    Mat abs_grad_x, abs_grad_y, grad2;
-    convertScaleAbs( grad_x, abs_grad_x );
-    convertScaleAbs( grad_y, abs_grad_y );
-    addWeighted( abs_grad_x, 0.5, abs_grad_y, 0.5, 0, grad2 );
-    cout << "Gradients Added" << endl;
-
-    char* window_name = "Sobel Demo - Simple Edge Detector";
-    namedWindow( window_name, CV_WINDOW_AUTOSIZE );
-    imshow( window_name, grad2);
-
-// 
-    cout << "Grad 2 has " << grad2.channels() << " channels" << endl;    
-    for(int i = 0; i < grad2.rows; i++){
-        for(int j = 0; j < grad2.cols; j++){
-            int px = (int) grad2.at<uchar>(i,j) ;
-            if(px != NULL){ 
-                    cout << px << ",";
-            }
-        }
-        cout << endl;
-    }
+//    Mat abs_grad_x, abs_grad_y, grad2;
+//    convertScaleAbs( grad_x, abs_grad_x );
+//    convertScaleAbs( grad_y, abs_grad_y );
+//    phase(abs_grad_x, abs_grad_y, *ang);
+//    addWeighted( abs_grad_x, 0.5, abs_grad_y, 0.5, 0, grad2 );
+//    cout << "Gradients Added" << endl;
 
 //    char* window_name = "Sobel Demo - Simple Edge Detector";
 //    namedWindow( window_name, CV_WINDOW_AUTOSIZE );
 //    imshow( window_name, grad2);
 
-    waitKey(25);
+// 
+//    cout << "Grad 2 has " << ang->channels() << " channels" << endl;    
+//    for(int i = 0; i < ang->rows; i++){
+//        for(int j = 0; j < ang->cols; j++){
+//            int px = ang->at<double>(i,j) ;
+////            if(px != NULL){ 
+//                    cout << px << ",";
+////            }
+//        }
+//        cout << "**" << endl;
+//    }
+
+//    char* window_name = "Sobel Demo - Simple Edge Detector";
+//    namedWindow( window_name, CV_WINDOW_AUTOSIZE );
+//    imshow( window_name, grad2);
+
+//    waitKey(25);
     
     string add_grad = ptr2str(grad);
     A2 = PlTerm(add_grad.c_str());
@@ -325,14 +326,14 @@ PREDICATE(sample_point, 4) {
 
     vector<double> dir_mag;
     Mat m = dir_seq->at(loc[2]);    
-    dir_mag[0] = m.at<double>(loc[0],loc[1]);
+    dir_mag[0] = m.at<double>(loc[1],loc[0]);
     m = mag_seq->at(loc[2]);
-    dir_mag[1] = m.at<double>(loc[0],loc[1]);
+    dir_mag[1] = m.at<double>(loc[1],loc[0]);
 
 	return A4 = vec2list(dir_mag);
 }
 
-/* sample_point(+MAGSEQ, +DIRSEQ, +POINT, -GRAD)
+/* sample_point_image(+MAGSEQ, +DIRSEQ, +POINT, -GRAD)
 * Sample a point and return a gradient object
 * @MAGSEQ = Address of the gradient magnitude sequence
 * @DIRSEQ = Address of the gradient direction sequence
@@ -352,8 +353,8 @@ PREDICATE(sample_point_image, 4) {
 
     vector<double> dir_mag(2);  
 
-    dir_mag[0] = dir.at<double>(loc[0],loc[1]);
-    dir_mag[1] = mag.at<double>(loc[0],loc[1]);
+    dir_mag[0] = dir.at<double>(loc[1],loc[0]);
+    dir_mag[1] = mag.at<double>(loc[1],loc[0]);
 
 	return A4 = vec2list(dir_mag);
 }
@@ -414,8 +415,10 @@ PREDICATE(sample_point_image, 4) {
 template <class Type>
 vector<Type> vec_subtract(vector<Type> a, vector<Type> b) {
     assert(a.size() == b.size());
-    vector<int> diff;
-    for(int i = 0; i < (int)a.size(); i++){
+//    cout << "HERE A Size = " << a.size() << ", B=" << b.size() << endl;
+    vector<Type> diff(a.size());
+    for(unsigned int i = 0; i < a.size(); i++){
+//        cout << "HERE A Val = " << a[i] << ", B=" << b[i] << endl;
         diff[i] = a[i] - b[i];    
     }
     return diff;
@@ -424,14 +427,28 @@ vector<Type> vec_subtract(vector<Type> a, vector<Type> b) {
 vector<double>get_dir_mag(vector<Mat> *dir_seq, vector<Mat> *mag_seq, vector<int>loc){
     vector<double> dir_mag;
     Mat m = dir_seq->at(loc[2]);    
-    dir_mag[0] = m.at<double>(loc[0],loc[1]);
+    dir_mag[0] = m.at<double>(loc[1],loc[0]);
     m = mag_seq->at(loc[2]);
-    dir_mag[1] = m.at<double>(loc[0],loc[1]);
+    dir_mag[1] = m.at<double>(loc[1],loc[0]);
     return dir_mag;
 }
 
+vector<double>get_dir_mag(Mat *dir, Mat *mag, vector<int>loc){
+    vector<double> dir_mag(2);
+    dir_mag[0] = dir->at<double>(loc[1],loc[0]);
+    dir_mag[1] = mag->at<double>(loc[1],loc[0]);
+    return dir_mag;
+}
 
-
+double vec_len(vector<int> v){
+    double l = 0;
+    
+    for(unsigned int i = 0; i < v.size(); i++){
+        l += pow(v[i],2);
+    }
+    
+    return sqrt(l);
+}
 /* noisy_line(+START, +END, +IMGSEQ, +DIRSEQ)
  * Samples points and checks if they're correct with a set probabilty   
  * @POINTS = [[X, Y]]: a list of points of interest
@@ -454,8 +471,8 @@ PREDICATE(noisy_line, 4){
 
     //Sample n points along the target line
     //from k subsets of size q, if the number of sucesses is above p then return true
-    int len = sqrt(diff[0] + diff[1] + diff[2]);
-    
+    int len = (int)vec_len(diff);
+        
     double EPSILON = 0.1;
     double THRESHOLD = 0.9;
     double NOISE_ESTIMATE = 0.2;
@@ -486,6 +503,73 @@ PREDICATE(noisy_line, 4){
         return FALSE;
     }   
 }
+
+
+/* noisy_line_image(+START, +END, +MAG, +DIR)
+ */
+PREDICATE(noisy_line_image, 4){
+    vector<int> start = list2vec<int>(A1, 3);
+    vector<int> end = list2vec<int>(A2, 3);
+    cout << "Vectors loaded" << endl;
+    vector<int> diff = vec_subtract(start, end);
+    
+    char *p1 = (char*) A3;
+    const string mag_add(p1); 
+    Mat *mag = str2ptr<Mat>(mag_add);
+
+    char *p2 = (char*) A4;
+    const string dir_add(p2); 
+    Mat *dir = str2ptr<Mat>(dir_add);
+    
+    cout << "Images loaded" << endl;
+    
+    vector<double> start_dir_mag = get_dir_mag(dir, mag, start);
+
+    cout << "Mag Loaded" << endl;
+
+    //Sample n points along the target line
+    //from k subsets of size q, if the number of sucesses is above p then return true
+    int len = (int)vec_len(diff);
+    
+    cout << "len = " << len << endl;
+        
+    double EPSILON = 0.1;
+    double THRESHOLD = 0.9;
+    double NOISE_ESTIMATE = 0.2;
+    int K = len * (EPSILON / NOISE_ESTIMATE);  
+    int q = K * (1 - NOISE_ESTIMATE);
+    int p = 0;
+    
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_int_distribution<> dis(0, len);
+    for(int i = 0; i < K; i++){
+        int r = dis(gen);
+        vector<int> loc = start;
+        for(int i = 0; i < 3; i++){
+            loc[i] += r * sqrt(pow(diff[i],2) / pow(len,2));
+        }      
+        
+//        cout << "r = " << r << ", new sample: " << loc[0] << "," << loc[1] << "," << loc[2] << endl;
+        
+        vector<double> t_dir_mag = get_dir_mag(dir, mag, loc);
+        
+        cout << "new sample: " << t_dir_mag[0] << "," << t_dir_mag[1] << ","  << start_dir_mag[0] << "," << start_dir_mag[1] << endl;
+        if(abs(start_dir_mag[0] - t_dir_mag[0]) < THRESHOLD && (abs(t_dir_mag[1]) > THRESHOLD)){
+            p++;
+        }
+    }
+    
+    cout << "found " << p << " valid samples, out of " << K << " tested. Required " << q << endl;
+    
+    if(p >= q){
+        return TRUE;
+    }else{
+        return FALSE;
+    }   
+}
+
+
 
 /* noisy_extend_line(+START, +END, +IMGSEQ, +DIRSEQ, +MAX_SIZE, -NEW_START, -NEW_END)
  * Samples points and checks if they're correct with a set probabilty

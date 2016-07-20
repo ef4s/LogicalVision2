@@ -29,18 +29,37 @@ run_test(W):-
 test_line:-
     format(atom(Img_file), 'data/~w.jpg', ['line']),
     load_img(Img_file, Img_add),
-    P1 = [150,203,100],
-    P2 = [450,194,100],
+    P1 = [150,201,100],
+    P2 = [450,201,100],
     draw_points_2d(Img_add, [P1,P2], red),
     gradient_image(Img_add,Dir_add,Mag_add),
     print(Dir_add),
     print(Mag_add),
-    sample_point_image(Dir_add,Mag_add,P1,X).
-%    print(X),
-%    showimg_win(Img_add, 'debug'),
+    sample_point_image(Dir_add,Mag_add,P1,X),
+    print(X),
+    showimg_win(Img_add, 'debug'),
+    noisy_line_image(P1,P2,Dir_add,Mag_add),
 %    showimg_win(Dir_add, 'dir'),
 %    showimg_win(Mag_add, 'mag'),
-%    release_img(Img_add).    
+    release_img(Img_add).    
+
+test_dashed_line:-
+    format(atom(Img_file), 'data/~w.jpg', ['dashed_line']),
+    load_img(Img_file, Img_add),
+    P1 = [150,175,100],
+    P2 = [455,180,100],
+    draw_points_2d(Img_add, [P1,P2], red),
+    gradient_image(Img_add,Dir_add,Mag_add),
+    print(Dir_add),
+    print(Mag_add),
+    sample_point_image(Dir_add,Mag_add,P1,X),
+    print(X),
+    showimg_win(Img_add, 'debug'),
+    noisy_line_image(P1,P2,Dir_add,Mag_add),
+%    showimg_win(Dir_add, 'dir'),
+%    showimg_win(Mag_add, 'mag'),
+    release_img(Img_add).    
+
     
 
 find_shapes(Diff_seq_add, [Resize_x, Resize_y], Shapes):-
