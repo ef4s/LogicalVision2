@@ -32,6 +32,9 @@ LDFLAGS_QT = `pkg-config --libs Qt5Gui`
 all:cvio.so cvsampler.so cvdraw.so cvatari.so
 	mv *.so $(LIBSDIR)/
 
+atari:cvatari.so
+	mv *.so $(LIBSDIR)/
+
 
 cvio.so:cvio.o
 	$(CXX) -shared $(LIBS) cvio.o -o cvio.so $(LDFLAGS_CV) $(LDFLAGS_SWI) $(LDFLAGS_QT)
