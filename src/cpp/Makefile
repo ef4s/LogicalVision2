@@ -32,7 +32,7 @@ LDFLAGS_QT = `pkg-config --libs Qt5Gui`
 all:cvio.so cvsampler.so cvdraw.so cvatari.so
 	mv *.so $(LIBSDIR)/
 
-atari:cvatari.so
+atari:cvatari.so lv_utils.so
 	mv *.so $(LIBSDIR)/
 
 
@@ -59,6 +59,12 @@ cvatari.so:cvatari.o
 
 cvatari.o:
 	$(CXX) -shared $(CXXFLAGS) $(CXXFLAGS_CV) $(CXXFLAGS_SWI) $(CXXFLAGS_QT) -c cvatari.cpp
+
+lv_utils.so:lv_utils.o
+	$(CXX) -shared $(LIBS) lv_utils.o -o lv_utils.so $(LDFLAGS_CV) $(LDFLAGS_SWI) $(LDFLAGS_QT)
+
+lv_utils.o:
+	$(CXX) -shared $(CXXFLAGS) $(CXXFLAGS_CV) $(CXXFLAGS_SWI) $(CXXFLAGS_QT) -c lv_utils.cpp
 
 clean:
 	rm -rf *.o *.so

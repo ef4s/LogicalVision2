@@ -30,7 +30,7 @@ test_line:-
     P1 = [150,201,100],
     P2 = [450,201,100],
     draw_points_2d(Img_add, [P1,P2], red),
-    gradient_image(Img_add,Dir_add,Mag_add),
+    gradient_image(Img_add,Mag_add,Dir_add),
 %    print(Dir_add),
 %    print(Mag_add),
 %    sample_point_image(Dir_add,Mag_add,P1,X),
@@ -47,7 +47,7 @@ test_dashed_line:-
     P1 = [150,175,100],
     P2 = [455,180,100],
     draw_points_2d(Img_add, [P1,P2], red),
-    gradient_image(Img_add,Dir_add,Mag_add),
+    gradient_image(Img_add,Mag_add,Dir_add),
 %    print(Dir_add),
 %    print(Mag_add),
 %    sample_point_image(Dir_add,Mag_add,P1,X),
@@ -66,17 +66,27 @@ test_square:-
     load_img(Img_file, Img_add),
     P1 = [142,157,100],
     P2 = [203,389,100],
-    draw_points_2d(Img_add, [P1,P2], red),
-    gradient_image(Img_add,Dir_add,Mag_add),
+    random_point(P1,150,P3),
+    random_point(P1,15,P4),
+    random_point(P1,15,P5),
+    random_point(P1,15,P6),
+    P7 = [203,388,100],
+%    Pts = [P1,P2,P3,P4,P5,P6],
+    Pts = [P1,P2,P3],
+    gradient_image(Img_add,Mag_add,Dir_add),
 %    print(Dir_add),
 %    print(Mag_add),
 %    sample_point_image(Dir_add,Mag_add,P1,X),
 %    print(X),
+%    all_lines(Pts,Dir_add,Mag_add,Lines),
+%    print(Lines),
+    similar_grad(P1,P3,Mag_add,Dir_add,0.1), 
+%    line(P1,P3,Dir_add,Mag_add),
+    draw_points_2d(Img_add, Pts, red),
     showimg_win(Img_add, 'debug'),
-%    similar_grad(P1,P2,Dir_add,Mag_add,0.1),
-%     adjacent(P1,P2),
 %    line(P1,P2,Dir_add,Mag_add),
-    corner(P1,Mag_add,Dir_add),
+%    corner(P1,Dir_add,Mag_add),
+
 %    showimg_win(Dir_add, 'dir'),
 %    showimg_win(Mag_add, 'mag'),
     release_img(Img_add).    
@@ -102,14 +112,81 @@ find_square(Grad_add,Angle_add,Square):-
     line(C3,C4,Grad_add,Angle_add),
     line(C4,C1,Grad_add,Angle_add).
 
-corner(C,Grad_add,Angle_add):-
-    random_point(C,10,C1),
-    random_point(C,10,C2),    
-    corner(C,C1,C2,Grad_add,Angle_add).
+all_lines(Pts,Grad_add,Angle_add,Lines):-
+    findall(X,
+        (subsetZ(X,Pts), 
+        length(X,2),
+        [P1,P2] = X,
+        line(P1,P2,Grad_add,Angle_add)),
+        Lines).
+
+
+all_corners(C,Pts,Grad_add,Angle_add):-  
+    subsetY(Corners,Pts,2),
+    findall(X,
+        (subsetZ(X,Pts), 
+        length(X,2),
+        [C1,C2] = X,
+        corner(C,C1,C2,Grad_add,Angle_add)),
+         Y),
+    length(Y,LY),
+    LY > 1,
+    print('**'),print(Y),print('**').
 
 corner(C,C1,C2,Grad_add,Angle_add):-
     line(C,C1,Grad_add,Angle_add),
     line(C,C2,Grad_add,Angle_add).    
+
+line(Start,End,Grad_add,Angle_add):-
+    similar_grad(Start,End,Grad_add,Angle_add,0.1), 
+    adjacent(Start,End, 5),
+    print('adj line').
+    
+line(Start,End,Grad_add,Angle_add):-
+    sample_between(Start,End,C), 
+    line(Start,C,Grad_add,Angle_add), 
+    line(C,End,Grad_add,Angle_add).
+
+line(Start,End,Grad_add,Angle_add):-
+    noisy_line_image(Start,End,Grad_add,Angle_add).
+
+%    noisy_extend_line(Start,End,Grad_add,Angle_add, 0.5, New_Start, New_End).
+
+similar_grad(P1,P2,Grad_add,Angle_add,Threshold):-
+    sample_point_image(Angle_add,Grad_add,P1,[X_mag,X_dir]),
+    sample_point_image(Angle_add,Grad_add,P2,[Y_mag,Y_dir]),
+    Mag is abs(X_mag - Y_mag),
+    angle_diff(X_dir,Y_dir,Dir),  
+    print('Mag is:'), print(Mag), 
+    print('Dir is:'), print(Dir),
+    Mag >  Threshold,
+    Dir =<  3.1415 / 4.
+
+angle_diff(A1,A2,Diff):-
+    C1 is (sin(A1) - sin(A2))**2,
+    C2 is (cos(A1) - cos(A2))**2,
+    Diff is acos((2.0 - C1 - C2)/2.0).
+
+sample_between([Sx,Sy,Sz],[Ex,Ey,Ez],[X,Y,Z]):-
+    X is round(Sx + ((Ex - Sx) / 2)),
+    Y is round(Sy + ((Ey - Sy) / 2)),
+    Z is round(Sz + ((Ez - Sz) / 2)),
+    not((X = Sx, Y = Sy, Z = Sz)),
+    not((X = Ex, Y = Ey, Z = Ez)).
+
+adjacent([Ax, Ay, Az],[Bx, By, Bz],Dist):-
+    X is (Ax - Bx) ** 2,
+    Y is (Ay - By) ** 2,
+    Z is (Az - Bz) ** 2,
+    Dist > sqrt(X + Y + Z).
+subsetY(A,B,L):-
+    findall(X, (subsetZ(X,B), length(X,L)),A).
+    
+subsetZ([],[]).
+subsetZ([X|L],[X|S]) :-
+    subsetZ(L,S).
+subsetZ(L, [_|S]) :-
+    subsetZ(L,S).
 
 
 random_radian(Radian):-
@@ -118,16 +195,20 @@ random_radian(Radian):-
     Radian is (Dir1 - 0.5) * 3.1415 * 2.
 
 calc_coords(L,A1,A2, [X,Y,Z]):-
-    Z is (L * sin(A1)),
+    Z is integer(L * sin(A1)),
     L2 is (L * cos(A1)),
-    X is (L2 * sin(A2)),
-    Y is (L2 * cos(A2)).
+    X is integer(L2 * sin(A2)),
+    Y is integer(L2 * cos(A2)).
+
+calc_coords_2d(L,A1,A2, [X,Y,0]):-
+    X is integer(L * sin(A2)),
+    Y is integer(L * cos(A2)).
 
 random_point([X,Y,Z],Len,Dest):-
     %Select direction
     random_radian(Dir1),
     random_radian(Dir2),
-    calc_coords(Len,Dir1,Dir2,[Dx,Dy,Dz]),
+    calc_coords_2d(Len,Dir1,Dir2,[Dx,Dy,Dz]),
     Nx is X + Dx,
     Ny is Y + Dy,
     Nz is Z + Dz,
@@ -139,55 +220,4 @@ random_point([X,Y,Z],[MaxX, MaxY, MaxZ],Len,Dest):-
     Ny is min(max(Ty,0),MaxY),
     Nz is min(max(Tz,0),MaxZ),
     Dest = [Nx,Ny,Nz].
-    
-
-
-
-line(Start,End,Grad_add,Angle_add):-
-    similar_grad(Start,End,Grad_add,Angle_add,0.1), 
-    adjacent(Start,End).
-    
-line(Start,End,Grad_add,Angle_add):-
-    sample_between(Start,End,C), 
-    line(Start,C,Grad_add,Angle_add), 
-    line(C,End,Grad_add,Angle_add).
-
-line(Start,End,Grad_add,Angle_add):-
-    noisy_line_image(Start,End,Grad_add,Angle_add).
-%    noisy_extend_line(Start,End,Grad_add,Angle_add, 0.5, New_Start, New_End).
-
-similar_grad(P1,P2,Grad_add,Angle_add,Threshold):-
-    sample_point_image(Angle_add,Grad_add,P1,[X_dir,X_mag]),
-    sample_point_image(Angle_add,Grad_add,P2,[Y_dir,Y_mag]),
-    Mag is abs(X_mag - Y_mag),
-    Dir is abs(X_dir - Y_dir),
-    Mag >  Threshold,
-    Dir >=  1.
-
-sample_between([Sx,Sy,Sz],[Ex,Ey,Ez],[X,Y,Z]):-
-    X is round(Sx + ((Sx - Ex) / 2)),
-    Y is round(Sy + ((Sy - Ey) / 2)),
-    Z is round(Sz + ((Sz - Ez) / 2)),
-    not((X = Sx, Y = Sy, Z = Sz)),
-    not((X = Ex, Y = Ey, Z = Ez)).
-
-
-adjacent([Ax, Ay, Z],[Bx, By, Z]):-
-    X is abs(Ax - Bx),
-    Y is abs(Ay - By),
-    X =< 1,
-    Y =< 1.
-
-adjacent([Ax, Y, Az],[Bx, Y, Bz]):-
-    X is abs(Ax - Bx),
-    Z is abs(Az - Bz),
-    X =< 1,
-    Z =< 1.
-
-adjacent([X, Ay, Az],[X, By, Bz]):-
-    Y is abs(Ay - By),
-    Z is abs(Az - Bz),
-    Y =< 1,
-    Z =< 1.
-    
 

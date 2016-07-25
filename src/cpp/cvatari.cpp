@@ -3,6 +3,7 @@
 #include "utils.hpp"
 #include "memread.hpp"
 #include "errors.hpp"
+#include "lv_utils.cpp"
 
 #include <opencv2/core/core.hpp>
 #include "opencv2/imgproc/imgproc.hpp"
@@ -202,20 +203,17 @@ PREDICATE(sample_point, 4) {
     char *p1 = (char*) A1;
     const string mag_seq_add(p1); 
     vector<Mat> *mag_seq = str2ptr<vector<Mat>>(mag_seq_add);
-
+    
     char *p2 = (char*) A2;
     const string dir_seq_add(p2); 
     vector<Mat> *dir_seq = str2ptr<vector<Mat>>(dir_seq_add);
-
+    
     vector<int> loc = list2vec<int>(A3, 3);
 
-    vector<double> dir_mag;
-    Mat m = dir_seq->at(loc[2]);    
-    dir_mag[0] = m.at<double>(loc[1],loc[0]);
-    m = mag_seq->at(loc[2]);
-    dir_mag[1] = m.at<double>(loc[1],loc[0]);
-
-	return A4 = vec2list(dir_mag);
+    Mat mag = mag_seq->at(loc[2]);    
+    Mat dir = dir_seq->at(loc[2]);    
+    
+	return A4 = vec2list(sample_point(mag,dir,loc));
 }
 
 /* sample_point_image(+MAGSEQ, +DIRSEQ, +POINT, -GRAD)
@@ -236,12 +234,7 @@ PREDICATE(sample_point_image, 4) {
 
     vector<int> loc = list2vec<int>(A3, 3);
 
-    vector<double> dir_mag(2);  
-
-    dir_mag[0] = dir.at<double>(loc[1],loc[0]);
-    dir_mag[1] = mag.at<double>(loc[1],loc[0]);
-
-	return A4 = vec2list(dir_mag);
+	return A4 = vec2list(sample_point(mag,dir,loc));
 }
 
 
@@ -297,43 +290,6 @@ PREDICATE(sample_point_image, 4) {
 //}
 
 
-template <class Type>
-vector<Type> vec_subtract(vector<Type> a, vector<Type> b) {
-    assert(a.size() == b.size());
-//    cout << "HERE A Size = " << a.size() << ", B=" << b.size() << endl;
-    vector<Type> diff(a.size());
-    for(unsigned int i = 0; i < a.size(); i++){
-//        cout << "HERE A Val = " << a[i] << ", B=" << b[i] << endl;
-        diff[i] = a[i] - b[i];    
-    }
-    return diff;
-}
-
-vector<double>get_dir_mag(vector<Mat> *dir_seq, vector<Mat> *mag_seq, vector<int>loc){
-    vector<double> dir_mag;
-    Mat m = dir_seq->at(loc[2]);    
-    dir_mag[0] = m.at<double>(loc[1],loc[0]);
-    m = mag_seq->at(loc[2]);
-    dir_mag[1] = m.at<double>(loc[1],loc[0]);
-    return dir_mag;
-}
-
-vector<double>get_dir_mag(Mat *dir, Mat *mag, vector<int>loc){
-    vector<double> dir_mag(2);
-    dir_mag[0] = dir->at<double>(loc[1],loc[0]);
-    dir_mag[1] = mag->at<double>(loc[1],loc[0]);
-    return dir_mag;
-}
-
-double vec_len(vector<int> v){
-    double l = 0;
-    
-    for(unsigned int i = 0; i < v.size(); i++){
-        l += pow(v[i],2);
-    }
-    
-    return sqrt(l);
-}
 ///* noisy_line(+START, +END, +IMGSEQ, +DIRSEQ)
 // * Samples points and checks if they're correct with a set probabilty   
 // * @POINTS = [[X, Y]]: a list of points of interest
@@ -395,8 +351,6 @@ double vec_len(vector<int> v){
 PREDICATE(noisy_line_image, 4){
     vector<int> start = list2vec<int>(A1, 3);
     vector<int> end = list2vec<int>(A2, 3);
-//    cout << " PETER Vectors loaded" << endl;
-    vector<int> diff = vec_subtract(start, end);
     
     char *p1 = (char*) A3;
     const string mag_add(p1); 
@@ -406,53 +360,7 @@ PREDICATE(noisy_line_image, 4){
     const string dir_add(p2); 
     Mat *dir = str2ptr<Mat>(dir_add);
     
-//    cout << "Images loaded" << endl;
-//    
-//    cout << "START: " << flush;
-//    cout << start[0] << flush; 
-//    cout << "," << start[1] << flush; 
-//    cout << "," << start[2] << endl;
-    
-    vector<double> start_dir_mag = get_dir_mag(dir, mag, start);
-
-//    cout << "Mag Loaded" << endl;
-
-    //Sample n points along the target line
-    //from k subsets of size q, if the number of sucesses is above p then return true
-    int len = (int)vec_len(diff);
-    
-//    cout << "len = " << len << endl;
-        
-    double EPSILON = 0.1;
-    double THRESHOLD = 0.9;
-    double NOISE_ESTIMATE = 0.2;
-    int K = len * (EPSILON / NOISE_ESTIMATE);  
-    int q = K * (1 - NOISE_ESTIMATE);
-    int p = 0;
-    
-    random_device rd;
-    mt19937 gen(rd());
-    uniform_int_distribution<> dis(0, len);
-    for(int i = 0; i < K; i++){
-        int r = dis(gen);
-        vector<int> loc = start;
-        for(int i = 0; i < 3; i++){
-            loc[i] += r * sqrt(pow(diff[i],2) / pow(len,2));
-        }      
-        
-//        cout << "r = " << r << ", new sample: " << loc[0] << "," << loc[1] << "," << loc[2] << endl;
-        
-        vector<double> t_dir_mag = get_dir_mag(dir, mag, loc);
-        
-//        cout << "new sample @" << loc[0] << "," << loc[1] << "," << loc[2] << ", vals:" << t_dir_mag[0] << "," << t_dir_mag[1] << ","  << start_dir_mag[0] << "," << start_dir_mag[1] << endl;
-        if(abs(start_dir_mag[0] - t_dir_mag[0]) < THRESHOLD && (abs(t_dir_mag[1]) > THRESHOLD)){
-            p++;
-        }
-    }
-    
-    cout << "found " << p << " valid samples out of " << K << " tested. Required " << q << endl;
-    
-    if(p >= q){
+    if(noisy_line(start, end, mag, dir)){
         return TRUE;
     }else{
         return FALSE;
