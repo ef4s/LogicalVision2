@@ -12,7 +12,7 @@ run_test(W):-
     size_3d(Vid_add, Width, Height, Depth),
     diff_seq(Img_seq_add, Diff_seq_add),
     resize_image(Diff_seq_add, 1234, [20, 20], Resize_img_add),
-    gradient_image(Diff_seq_add, 1234, Grad_add, Angle_add),
+    gradient_image(Diff_seq_add, 1234, Mag_add, Dir_add),
     showimg_win(Resize_img_add, resized).
 %    sample_point(Img_seq_add, [1, 1, 1], VAR),
 %    write(VAR),
@@ -64,101 +64,96 @@ test_dashed_line:-
 test_square:-
     format(atom(Img_file), 'data/~w.jpg', ['6']),
     load_img(Img_file, Img_add),
-    P1 = [142,157,100],
+    gradient_image(Img_add,Mag_add,Dir_add),
+    
+    P1 = [142,157,100], 
     P2 = [203,389,100],
-    random_point(P1,150,P3),
+    P3 = [270,122,100],
+%    random_point(P1,15,P3),
     random_point(P1,15,P4),
     random_point(P1,15,P5),
-    random_point(P1,15,P6),
-    P7 = [203,388,100],
+%    random_point(P1,15,P6),
+    P6 = [142,122,100],
 %    Pts = [P1,P2,P3,P4,P5,P6],
-    Pts = [P1,P2,P3],
-    gradient_image(Img_add,Mag_add,Dir_add),
-%    print(Dir_add),
-%    print(Mag_add),
-%    sample_point_image(Dir_add,Mag_add,P1,X),
-%    print(X),
-%    all_lines(Pts,Dir_add,Mag_add,Lines),
-%    print(Lines),
-    similar_grad(P1,P3,Mag_add,Dir_add,0.1), 
-%    line(P1,P3,Dir_add,Mag_add),
+%    Pts = [P1,P2,P3],
+    Pts = [P1,P2,P3,P6],
+
+    
+%    line(P1,P2,Mag_add,Dir_add),
+    line(P1,P3,Mag_add,Dir_add),
+
+%    corner(P1,P2,P3,Mag_add,Dir_add),
+    
+%    all_corners(P1,Pts,Mag_add,Dir_add,Corners),
+%    print(Corners),    
+
     draw_points_2d(Img_add, Pts, red),
     showimg_win(Img_add, 'debug'),
-%    line(P1,P2,Dir_add,Mag_add),
-%    corner(P1,Dir_add,Mag_add),
 
-%    showimg_win(Dir_add, 'dir'),
-%    showimg_win(Mag_add, 'mag'),
     release_img(Img_add).    
     
 
 find_shapes(Diff_seq_add, [Resize_x, Resize_y], Shapes):-
 	resize_image(Diff_seq_add, 1234, [20, 20], Resize_img_add),
-	gradient_image(Diff_seq_add, 1234, Grad_add, Angle_add),
-	findall(Shape, find_shape(Grad_add, Angle_add, Shape), Shapes).
+	gradient_image(Diff_seq_add, 1234, Mag_add, Dir_add),
+	findall(Shape, find_shape(Mag_add, Dir_add, Shape), Shapes).
 
-find_shape(Grad_add, Angle_add, Shape):-
+find_shape(Mag_add, Dir_add, Shape):-
 	random_point_on_line(Point),
-	matching_point(Point, Grad_add, Angle_add, Point2),
+	matching_point(Point, Mag_add, Dir_add, Point2),
 	prove_line(Point, Point2).
 	
-find_square(Grad_add,Angle_add,Square):-
-    corner(C1,Grad_add,Angle_add),
-    corner(C2,Grad_add,Angle_add),
-    line(C1,C2,Grad_add,Angle_add),
-    corner(C3,Grad_add,Angle_add),
-    line(C2,C3,Grad_add,Angle_add),
-    corner(C4,Grad_add,Angle_add),
-    line(C3,C4,Grad_add,Angle_add),
-    line(C4,C1,Grad_add,Angle_add).
+find_square(Mag_add,Dir_add,Square):-
+    corner(C1,Mag_add,Dir_add),
+    corner(C2,Mag_add,Dir_add),
+    line(C1,C2,Mag_add,Dir_add),
+    corner(C3,Mag_add,Dir_add),
+    line(C2,C3,Mag_add,Dir_add),
+    corner(C4,Mag_add,Dir_add),
+    line(C3,C4,Mag_add,Dir_add),
+    line(C4,C1,Mag_add,Dir_add).
 
-all_lines(Pts,Grad_add,Angle_add,Lines):-
+all_lines(Pts,Mag_add,Dir_add,Lines):-
     findall(X,
         (subsetZ(X,Pts), 
         length(X,2),
         [P1,P2] = X,
-        line(P1,P2,Grad_add,Angle_add)),
+        line(P1,P2,Mag_add,Dir_add)),
         Lines).
 
-
-all_corners(C,Pts,Grad_add,Angle_add):-  
-    subsetY(Corners,Pts,2),
+all_corners(C,Pts,Mag_add,Dir_add,Corners):-  
     findall(X,
         (subsetZ(X,Pts), 
         length(X,2),
         [C1,C2] = X,
-        corner(C,C1,C2,Grad_add,Angle_add)),
-         Y),
-    length(Y,LY),
-    LY > 1,
-    print('**'),print(Y),print('**').
+        corner(C,C1,C2,Mag_add,Dir_add)),
+        Corners),
+    print('**'),print(Corners),print('**').
 
-corner(C,C1,C2,Grad_add,Angle_add):-
-    line(C,C1,Grad_add,Angle_add),
-    line(C,C2,Grad_add,Angle_add).    
+corner(C,C1,C2,Mag_add,Dir_add):-
+    C \= C1, C \= C2, C1 \= C2, 
+    line(C,C1,Mag_add,Dir_add),
+    line(C,C2,Mag_add,Dir_add).    
 
-line(Start,End,Grad_add,Angle_add):-
-    similar_grad(Start,End,Grad_add,Angle_add,0.1), 
-    adjacent(Start,End, 5),
-    print('adj line').
+line(Start,End,Mag_add,Dir_add):-
+    similar_grad(Start,End,Mag_add,Dir_add,0.1), 
+    adjacent(Start,End,5).
     
-line(Start,End,Grad_add,Angle_add):-
+line(Start,End,Mag_add,Dir_add):-
     sample_between(Start,End,C), 
-    line(Start,C,Grad_add,Angle_add), 
-    line(C,End,Grad_add,Angle_add).
+    line(Start,C,Mag_add,Dir_add), 
+    line(C,End,Mag_add,Dir_add).
 
-line(Start,End,Grad_add,Angle_add):-
-    noisy_line_image(Start,End,Grad_add,Angle_add).
+line(Start,End,Mag_add,Dir_add):-
+    noisy_line_image(Start,End,Mag_add,Dir_add).
+    noisy_extend_line(Start,End,Mag_add,Dir_add, 0.5, New_Start, New_End).
 
-%    noisy_extend_line(Start,End,Grad_add,Angle_add, 0.5, New_Start, New_End).
-
-similar_grad(P1,P2,Grad_add,Angle_add,Threshold):-
-    sample_point_image(Angle_add,Grad_add,P1,[X_mag,X_dir]),
-    sample_point_image(Angle_add,Grad_add,P2,[Y_mag,Y_dir]),
+similar_grad(P1,P2,Mag_add,Dir_add,Threshold):-
+    sample_point_image(P1,Mag_add,Dir_add,[X_mag,X_dir]),
+    sample_point_image(P2,Mag_add,Dir_add,[Y_mag,Y_dir]),
     Mag is abs(X_mag - Y_mag),
     angle_diff(X_dir,Y_dir,Dir),  
-    print('Mag is:'), print(Mag), 
-    print('Dir is:'), print(Dir),
+%    print('Mag is: '), print(Mag),print(', Dir is: '), print(Dir),
     Mag >  Threshold,
     Dir =<  3.1415 / 4.
 
@@ -179,6 +174,8 @@ adjacent([Ax, Ay, Az],[Bx, By, Bz],Dist):-
     Y is (Ay - By) ** 2,
     Z is (Az - Bz) ** 2,
     Dist > sqrt(X + Y + Z).
+    
+    
 subsetY(A,B,L):-
     findall(X, (subsetZ(X,B), length(X,L)),A).
     
@@ -188,9 +185,8 @@ subsetZ([X|L],[X|S]) :-
 subsetZ(L, [_|S]) :-
     subsetZ(L,S).
 
-
 random_radian(Radian):-
-    % Takes in a number in (0,1) and transforms it into (0, 2*pi)
+    % Returns a number in (0, 2*pi)
     random(Dir1),
     Radian is (Dir1 - 0.5) * 3.1415 * 2.
 
@@ -204,7 +200,9 @@ calc_coords_2d(L,A1,A2, [X,Y,0]):-
     X is integer(L * sin(A2)),
     Y is integer(L * cos(A2)).
 
+
 random_point([X,Y,Z],Len,Dest):-
+    % Random point without enforcing bounds
     %Select direction
     random_radian(Dir1),
     random_radian(Dir2),
@@ -215,6 +213,8 @@ random_point([X,Y,Z],Len,Dest):-
     Dest = [Nx,Ny,Nz].
     
 random_point([X,Y,Z],[MaxX, MaxY, MaxZ],Len,Dest):-
+    % Random point with enforcing bounds
+    % Enforcement done by limiting - could be better.
     random_point([X,Y,Z],Len,[Tx,Ty,Tz]),
     Nx is min(max(Tx,0),MaxX),
     Ny is min(max(Ty,0),MaxY),

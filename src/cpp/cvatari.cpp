@@ -92,46 +92,17 @@ PREDICATE(gradient_image, 3) {
     Mat src_gray;
     /// Convert it to gray
     cvtColor( src, src_gray, CV_BGR2GRAY );
-//    cout << "Image Converted" << endl;
     Sobel(src_gray, grad_x, ddepth, 1, 0, 3, scale, delta, BORDER_DEFAULT);
     Sobel(src_gray, grad_y, ddepth, 0, 1, 3, scale, delta, BORDER_DEFAULT);
-//    cout << "Gradients Calculated" << endl;
-//    Sobel(src, grad_x, ddepth, 1, 0, 3, scale, delta, BORDER_DEFAULT);
-//    Sobel(src, grad_y, ddepth, 0, 1, 3, scale, delta, BORDER_DEFAULT);
-//    //    cout << "Gradients Calculated" << endl;
-    addWeighted(grad_x, 0.5, grad_y, 0.5, 0, *grad);
-//    //    cout << "Magnitudes Calculated" << endl;
-    phase(grad_x, grad_y, *ang);
-//    //    cout << "Angles Calculated" << endl;
 
-//    Mat abs_grad_x, abs_grad_y, grad2;
+    addWeighted(grad_x, 0.5, grad_y, 0.5, 0, *grad);
+    phase(grad_x, grad_y, *ang);
+
+//    Mat abs_grad_x, abs_grad_y;
 //    convertScaleAbs( grad_x, abs_grad_x );
 //    convertScaleAbs( grad_y, abs_grad_y );
-//    phase(abs_grad_x, abs_grad_y, *ang);
-//    addWeighted( abs_grad_x, 0.5, abs_grad_y, 0.5, 0, grad2 );
-//    cout << "Gradients Added" << endl;
-
-//    char* window_name = "Sobel Demo - Simple Edge Detector";
-//    namedWindow( window_name, CV_WINDOW_AUTOSIZE );
-//    imshow( window_name, grad2);
-
-// 
-//    cout << "Grad 2 has " << ang->channels() << " channels" << endl;    
-//    for(int i = 0; i < ang->rows; i++){
-//        for(int j = 0; j < ang->cols; j++){
-//            int px = ang->at<double>(i,j) ;
-////            if(px != NULL){ 
-//                    cout << px << ",";
-////            }
-//        }
-//        cout << "**" << endl;
-//    }
-
-//    char* window_name = "Sobel Demo - Simple Edge Detector";
-//    namedWindow( window_name, CV_WINDOW_AUTOSIZE );
-//    imshow( window_name, grad2);
-
-//    waitKey(25);
+//    phase(grad_x, grad_y, *ang);
+//    addWeighted( abs_grad_x, 0.5, abs_grad_y, 0.5, 0, *grad );
     
     string add_grad = ptr2str(grad);
     A2 = PlTerm(add_grad.c_str());
@@ -200,20 +171,19 @@ PREDICATE(diff_seq, 2) {
 * @GRAD: returned point
 */
 PREDICATE(sample_point, 4) {
-    char *p1 = (char*) A1;
+    vector<int> loc = list2vec<int>(A1, 3);
+
+    char *p1 = (char*) A2;
     const string mag_seq_add(p1); 
     vector<Mat> *mag_seq = str2ptr<vector<Mat>>(mag_seq_add);
-    
-    char *p2 = (char*) A2;
+    Mat mag = mag_seq->at(loc[2]);    
+        
+    char *p2 = (char*) A3;
     const string dir_seq_add(p2); 
     vector<Mat> *dir_seq = str2ptr<vector<Mat>>(dir_seq_add);
-    
-    vector<int> loc = list2vec<int>(A3, 3);
-
-    Mat mag = mag_seq->at(loc[2]);    
     Mat dir = dir_seq->at(loc[2]);    
     
-	return A4 = vec2list(sample_point(mag,dir,loc));
+	return A4 = vec2list(sample_point(loc,mag,dir));
 }
 
 /* sample_point_image(+MAGSEQ, +DIRSEQ, +POINT, -GRAD)
@@ -224,17 +194,17 @@ PREDICATE(sample_point, 4) {
 * @GRAD: returned point
 */
 PREDICATE(sample_point_image, 4) {
-    char *p1 = (char*) A1;
+    vector<int> loc = list2vec<int>(A1, 3);
+
+    char *p1 = (char*) A2;
     const string mag_seq_add(p1); 
     Mat mag = *str2ptr<Mat>(mag_seq_add);
     
-    char *p2 = (char*) A2;
+    char *p2 = (char*) A3;
     const string dir_seq_add(p2); 
     Mat dir = *str2ptr<Mat>(dir_seq_add);
 
-    vector<int> loc = list2vec<int>(A3, 3);
-
-	return A4 = vec2list(sample_point(mag,dir,loc));
+	return A4 = vec2list(sample_point(loc,mag,dir));
 }
 
 
@@ -308,7 +278,7 @@ PREDICATE(sample_point_image, 4) {
 //    const string dir_seq_add(p2); 
 //    vector<Mat> *dir_seq = str2ptr<vector<Mat>>(dir_seq_add);
 
-//    vector<double> start_dir_mag = get_dir_mag(dir_seq, mag_seq, start);
+//    vector<double> start_mag_dir = get_mag_dir(dir_seq, mag_seq, start);
 
 //    //Sample n points along the target line
 //    //from k subsets of size q, if the number of sucesses is above p then return true
@@ -331,9 +301,9 @@ PREDICATE(sample_point_image, 4) {
 //            loc[i] += r * (diff[i] / len);
 //        }      
 //        
-//        vector<double> t_dir_mag = get_dir_mag(dir_seq, mag_seq, loc);
+//        vector<double> t_mag_dir = get_mag_dir(dir_seq, mag_seq, loc);
 //        
-//        if((start_dir_mag[0] == t_dir_mag[0]) && (t_dir_mag[1] > THRESHOLD)){
+//        if((start_mag_dir[0] == t_mag_dir[0]) && (t_mag_dir[1] > THRESHOLD)){
 //            p++;
 //        }
 //    }
@@ -388,7 +358,7 @@ PREDICATE(noisy_extend_line, 7){
     const string dir_seq_add(p2); 
     vector<Mat> *dir_seq = str2ptr<vector<Mat>>(dir_seq_add);
 
-    vector<double> start_dir_mag = get_dir_mag(dir_seq, mag_seq, start);
+    vector<double> start_mag_dir = get_mag_dir(start, mag_seq, dir_seq);
 
     //Sample n points along the target line
     //from k subsets of size q, if the number of sucesses is above p then return true
@@ -410,12 +380,11 @@ PREDICATE(noisy_extend_line, 7){
             new_start[j] += (k - (K / 2)) * (diff[j] / len);
         }
         
-        vector<double> t_dir_mag = get_dir_mag(dir_seq, mag_seq, new_start);        
+        vector<double> t_mag_dir = get_mag_dir(new_start, dir_seq, mag_seq);        
                 
-        if((start_dir_mag[0] == t_dir_mag[0]) && (t_dir_mag[1] > THRESHOLD)){
+        if((start_mag_dir[0] == t_mag_dir[0]) && (t_mag_dir[1] > THRESHOLD)){
             p++;
             valid_counts[k] = true;
-        }else{
             valid_counts[k] = false;
         }
     }
@@ -429,9 +398,9 @@ PREDICATE(noisy_extend_line, 7){
         
         bool new_valid_point = false;
         
-        vector<double> t_dir_mag = get_dir_mag(dir_seq, mag_seq, new_start);        
+        vector<double> t_mag_dir = get_mag_dir(new_start, mag_seq, dir_seq);        
         
-        if((start_dir_mag[0] == t_dir_mag[0]) && (t_dir_mag[1] > THRESHOLD)){
+        if(similar_grad(start_mag_dir, t_mag_dir, THRESHOLD)){
             p++;
             new_valid_point = true;
         }
@@ -456,9 +425,9 @@ PREDICATE(noisy_extend_line, 7){
             new_end[i] += (k - (K / 2)) * (-diff[j] / len);
         }
         
-        vector<double> t_dir_mag = get_dir_mag(dir_seq, mag_seq, new_end);        
+        vector<double> t_mag_dir = get_mag_dir(new_end, mag_seq, dir_seq);        
                 
-        if((start_dir_mag[0] == t_dir_mag[0]) && (t_dir_mag[1] > THRESHOLD)){
+        if(similar_grad(start_mag_dir, t_mag_dir, THRESHOLD)){
             p++;
             valid_counts[k] = true;
         }else{
@@ -473,10 +442,10 @@ PREDICATE(noisy_extend_line, 7){
             new_end[i] += i * (diff[j] / len);
         }
         
-        vector<double> t_dir_mag = get_dir_mag(dir_seq, mag_seq, new_end);        
+        vector<double> t_mag_dir = get_mag_dir(new_end, mag_seq, dir_seq);        
         
         bool new_valid_point = false;
-        if((start_dir_mag[0] == t_dir_mag[0]) && (t_dir_mag[1] > THRESHOLD)){
+        if(similar_grad(start_mag_dir, t_mag_dir, THRESHOLD)){
             p++;
             new_valid_point = true;
         }
