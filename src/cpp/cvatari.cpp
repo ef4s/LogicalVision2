@@ -87,7 +87,7 @@ PREDICATE(gradient_image, 3) {
     Mat *grad = new Mat(src.size(), ddepth);
     Mat *ang = new Mat(src.size(), ddepth);
 
-    GaussianBlur( src, src, Size(3,3), 0, 0, BORDER_DEFAULT );
+    GaussianBlur( src, src, Size(5,5), 0, 0, BORDER_DEFAULT );
 
     Mat src_gray;
     /// Convert it to gray

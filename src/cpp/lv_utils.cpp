@@ -42,6 +42,7 @@ vector<double>get_mag_dir(const vector<int>loc, const vector<Mat> *mag_seq, cons
 
 vector<double>get_mag_dir(const vector<int>loc, const Mat *mag, const Mat *dir){
     vector<double> mag_dir(2);
+//    cout << loc[0] << '\t' << loc[1] << endl;
     mag_dir[0] = mag->at<double>(loc[1],loc[0]);
     mag_dir[1] = dir->at<double>(loc[1],loc[0]);
     return mag_dir;
@@ -66,9 +67,21 @@ bool similar_grad(const vector<double> d1, const vector<double> d2, const double
 //   bool b = (abs(d1[0] - d2[0]) >= threshold);
 //    cout << "C++Mag: " << abs(d1[0] - d2[0]) << ": " << d1[0] <<", " << d2[0];
     bool b = (abs(d2[0]) >= threshold);
-    cout << "C++Mag: " << abs(d2[0]) << ": " << d1[0] <<", " << d2[0];
-    bool c = (angle_diff(d1[1], d2[1]) <= (3.1415 / 4.0));
-    cout << ", Dir: " << angle_diff(d1[1], d2[1]) << ": " << d1[1] <<", " <<  d2[1] << endl;
+//    cout << "C++Mag: " << abs(d2[0]) << ":\t" << d1[0] <<"\t" << d2[0];
+//    if(b){ 
+//        cout << " true";
+//    }else{
+//        cout << " false";
+//    }
+    double ANGLE_THRESHOLD = 3.1415 / 2.0;
+    bool c = (angle_diff(d1[1], d2[1]) <= ANGLE_THRESHOLD);
+//    cout << ", Dir: " << angle_diff(d1[1], d2[1]) << ": " << d1[1] <<" " <<  d2[1];
+//    if(c){ 
+//        cout << " true";
+//    }else{
+//        cout << " false";
+//    }        
+//    cout << endl;
     return b && c;
 }
 
@@ -84,32 +97,45 @@ double vec_len(const vector<int> v){
 
 bool noisy_line(const vector<int> start, const vector<int> end, const Mat *mag, const Mat *dir){
     
-    cout << start[0] << ", "<< start[1] << ", "<< start[2] << ": " << end[0] << ", "<< end[1] << ", "<< end[2] << endl;
+//    cout << start[0] << ","<< start[1] << ", "<< start[2] << ": " << end[0] << ", "<< end[1] << ", "<< end[2] << endl;
     
-    vector<int> diff = vec_subtract(start, end);
-   
+    vector<int> diff = vec_subtract(end, start);
+    double len = vec_len(diff);
+    vector<double> norm_diff(3);
+//     cout << "Diff and norm diff are: " << endl;
+    for(int i = 0; i < 3; i++){
+        norm_diff[i] = diff[i] / (double) len;
+//        cout << diff[i] << " vs \t" << norm_diff[i] << endl;
+    }   
+    
+    
     vector<double> start_mag_dir = get_mag_dir(start, mag, dir);
-
-    int len = (int)vec_len(diff);
     
-    if(len <= 2) return false;
+    if(len <= 2) {
+//        cout << "Len too small" << endl;
+        return false;
+    }
             
-    double EPSILON = 0.1;
-    double THRESHOLD = 0.9;
-    double NOISE_ESTIMATE = 0.2;
-    int K = max(len * (EPSILON / NOISE_ESTIMATE),1.0);  
+//    double EPSILON = 0.1;
+    const double THRESHOLD = 0.9;
+    const double NOISE_ESTIMATE = 0.2;
+    int K = (THRESHOLD / NOISE_ESTIMATE);  
     
     random_device rd;
     mt19937 gen(rd());
-    uniform_int_distribution<> dis(0, len);
+    uniform_real_distribution<> dis(0, len);
+//    cout << "Len is : " << len << ", K is " << K << endl;
     for(int i = 0; i < K; i++){
-        int r = dis(gen);
+        double r = dis(gen);
         vector<int> loc = start;
+
         for(int i = 0; i < 3; i++){
-            loc[i] += r * sqrt(pow(diff[i],2) / pow(len,2));
+//            loc[i] += r * sqrt(pow(diff[i],2) / pow(len,2));
+            
+            loc[i] += r * norm_diff[i] ;
         }      
         
-//        cout << "r = " << r << ", new sample: " << loc[0] << "," << loc[1] << "," << loc[2] << endl;
+//        cout << "\t r = " << r << ", new sample: " << loc[0] << "," << loc[1] << "," << loc[2];
         
         vector<double> t_mag_dir = get_mag_dir(loc, mag, dir);
         
