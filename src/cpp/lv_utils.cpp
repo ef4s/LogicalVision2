@@ -149,4 +149,22 @@ bool noisy_line(const vector<int> start, const vector<int> end, const Mat *mag, 
 }
 
 
+void gradient_image(Mat *src, Mat *mag, Mat *dir){
+    int scale = 1;
+    int delta = 0;
+    int ddepth = CV_64F;
 
+    mag = new Mat(src->size(), ddepth);
+    dir = new Mat(src->size(), ddepth);
+
+    Mat sobel_x, sobel_y, src_adj;
+
+    GaussianBlur(*src, src_adj, Size(5,5), 0, 0, BORDER_DEFAULT);
+    cvtColor(src_adj, src_adj, CV_BGR2GRAY);    /// Convert it to gray
+    
+    Sobel(src_adj, sobel_x, ddepth, 1, 0, 3, scale, delta, BORDER_DEFAULT);
+    Sobel(src_adj, sobel_y, ddepth, 0, 1, 3, scale, delta, BORDER_DEFAULT);
+
+    addWeighted(sobel_x, 0.5, sobel_y, 0.5, 0, *mag);
+    phase(sobel_x, sobel_y, *dir);
+}

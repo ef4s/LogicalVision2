@@ -22,52 +22,32 @@
 using namespace std;
 using namespace cv;
 
-///* gradient_point(+IMGSEQ, +[X, Y, Z], +KERNEL_SIZE, -GRAD)
-// * get gradient of local area of point [X, Y, Z] in image sequence IMGSEQ
-// */
-//PREDICATE(sample_point, 3) {
-//    char *p1 = (char*) A1;
-//    vector<int> vec = list2vec<int>(A2, 3);
-//    Scalar point(vec[0], vec[1], vec[2]); // coordinates scalar
-//
-//    // get image sequence and compute variance
-//    const string add_seq(p1);
-//    vector<Mat> *seq = str2ptr<vector<Mat>>(add_seq);
-//
-//}
-//
-/* gradient_seq(+IMGSEQ, +IMG, -Magnitude, -Direction)
- * get gradient of local area of point [X, Y, Z] in image sequence IMGSEQ
+/* gradient_seq(+IMGSEQ, -Magnitude, -Direction)
+ * get gradient of an image sequence IMGSEQ
  */
 PREDICATE(gradient_seq, 4) {
     char *p1 = (char*) A1;
     const string add_seq(p1);
     vector<Mat> *seq = str2ptr<vector<Mat>>(add_seq);
+    vector<Mat> *mag_seq;
+    vector<Mat> *dir_seq;
 
-    int img = (int) A2;
+    for(vector<Mat>::iterator src = seq->begin(); src != seq->end(); src++){    
+        Mat *mag, *dir;
+        
+        gradient_image(&(*src), mag, dir);
+        
+        mag_seq->push_back(*mag);
+        dir_seq->push_back(*dir);
+        
+    }
 
-    Mat src = seq->at(img);
+    string add_mag = ptr2str(mag_seq);
+    A2 = PlTerm(add_mag.c_str());
 
-    int scale = 1;
-    int delta = 0;
-    int ddepth = CV_64F;
+    string add_dir = ptr2str(dir_seq);
+    A3 = PlTerm(add_dir.c_str());
 
-    Mat grad_x, grad_y;
-    Mat *grad = new Mat(src.size(), ddepth);
-    Mat *ang = new Mat(src.size(), ddepth);
-
-    Sobel(src, grad_x, ddepth, 1, 0, 3, scale, delta, BORDER_DEFAULT);
-    Sobel(src, grad_y, ddepth, 0, 1, 3, scale, delta, BORDER_DEFAULT);
-    //    cout << "Gradients Calculated" << endl;
-    addWeighted(grad_x, 0.5, grad_y, 0.5, 0, *grad);
-    //    cout << "Magnitudes Calculated" << endl;
-    phase(grad_x, grad_y, *ang);
-    //    cout << "Angles Calculated" << endl;
-
-    string add_grad = ptr2str(grad);
-    A3 = PlTerm(add_grad.c_str());
-    string add_ang = ptr2str(ang);
-    A4 = PlTerm(add_ang.c_str());
     return TRUE;
 }
 
@@ -77,37 +57,17 @@ PREDICATE(gradient_seq, 4) {
 PREDICATE(gradient_image, 3) {
     char *p1 = (char*) A1;
     const string add_img(p1);
-    Mat src = *str2ptr<Mat>(add_img);
-
-    int scale = 1;
-    int delta = 0;
-    int ddepth = CV_64F;
-
-    Mat grad_x, grad_y;
-    Mat *grad = new Mat(src.size(), ddepth);
-    Mat *ang = new Mat(src.size(), ddepth);
-
-    GaussianBlur( src, src, Size(5,5), 0, 0, BORDER_DEFAULT );
-
-    Mat src_gray;
-    /// Convert it to gray
-    cvtColor( src, src_gray, CV_BGR2GRAY );
-    Sobel(src_gray, grad_x, ddepth, 1, 0, 3, scale, delta, BORDER_DEFAULT);
-    Sobel(src_gray, grad_y, ddepth, 0, 1, 3, scale, delta, BORDER_DEFAULT);
-
-    addWeighted(grad_x, 0.5, grad_y, 0.5, 0, *grad);
-    phase(grad_x, grad_y, *ang);
-
-//    Mat abs_grad_x, abs_grad_y;
-//    convertScaleAbs( grad_x, abs_grad_x );
-//    convertScaleAbs( grad_y, abs_grad_y );
-//    phase(grad_x, grad_y, *ang);
-//    addWeighted( abs_grad_x, 0.5, abs_grad_y, 0.5, 0, *grad );
+    Mat *src = str2ptr<Mat>(add_img);
     
-    string add_grad = ptr2str(grad);
-    A2 = PlTerm(add_grad.c_str());
-    string add_ang = ptr2str(ang);
-    A3 = PlTerm(add_ang.c_str());
+    Mat *mag, *dir;
+    
+    gradient_image(src, mag, dir);
+        
+    string add_mag = ptr2str(mag);
+    A2 = PlTerm(add_mag.c_str());
+    string add_dir = ptr2str(dir);
+    A3 = PlTerm(add_dir.c_str());
+
     return TRUE;
 }
 
@@ -208,112 +168,35 @@ PREDICATE(sample_point_image, 4) {
 }
 
 
-///* sample_line_to_point(+IMGSEQ, +POINT, +DIR, +BOUND, +THRESHOLD, -Point)
-// * Sample along a line until you reach the first point with gradient above threshold
-// * @IMGSEQ = Address of image sequence
-// * @POINT = [X, Y, Z]: a point that the line crosses
-// * @DIR = [DX, DY, DZ]: direction of the line
-// * @BOUND = [W, H, D]: size limit of the video (width, height and duration),
-// *                     usually obtained from 'size_3d(VID, W, H, D)'
-// * @POINT: returned point
-// */
-//PREDICATE(sample_line_to_point, 6) {
-//    char *p1 = (char*) A1;
-//    const string add_seq(p1); // address
-//    vector<Mat> *seq = str2ptr<vector<Mat>>(add_seq);
-//
-//    vector<int> s_vec = list2vec<int>(A2, 3);
-//    Scalar start(s_vec[0], s_vec[1], s_vec[2]);
-//    Scalar current(s_vec[0], s_vec[1], s_vec[2]);
-//
-//    s_vec = list2vec<int>(A3, 3);
-//    Scalar dir(s_vec[0], s_vec[1], s_vec[2]);
-//
-//    s_vec = list2vec<int>(A4, 3);
-//    Scalar bound(s_vec[0], s_vec[1], s_vec[2]);
-//
-//    //Follow along the line until you find a gradient that exceeds threshold
-//    double grad = 0;
-//    double thresh = (double) A5;
-//
-////    while(grad < thresh || (current[0]){
-////
-////
-////    }
-//
-//
-//}
+/* noisy_line(+START, +END, +IMGSEQ, +DIRSEQ)
+ * Samples points and checks if they're correct with a set probabilty   
+ * @POINTS = [[X, Y]]: a list of points of interest
+ * @RECTANGLE = the rectangle that closes the set of points
+ */
+PREDICATE(noisy_line, 4){
+    vector<int> start = list2vec<int>(A1, 3);
+    vector<int> end = list2vec<int>(A2, 3);
+    
+    if(start[2] != end[2]) {
+        return FALSE;
+    }
+    
+    char *p1 = (char*) A3;
+    const string mag_seq_add(p1); 
+    vector<Mat> *mag_seq = str2ptr<vector<Mat>>(mag_seq_add);
+    Mat *mag = &(mag_seq->at(start[2]));    
+        
+    char *p2 = (char*) A3;
+    const string dir_seq_add(p2); 
+    vector<Mat> *dir_seq = str2ptr<vector<Mat>>(dir_seq_add);
+    Mat *dir = &(dir_seq->at(start[2]));    
 
-
-///* fit_rectangle(+POINTS, -RECTANGLE)
-// * Sample along a line until you reach the first point with gradient above threshold
-// * @POINT = [X, Y, Z]: a list of points of interest
-// * @RECTANGLE = the rectangle that closes the set of points
-// */
-//PREDICATE(fit_rectangle, 2) {
-
-//    vector<Scalar> points = point_list2vec(A1);
-//    RotatedRect box = minAreaRect(Mat(points));
-//    vector<double> box_param = (box.center, box.size[0], box.size[1], box.angle);
-
-//    return A2  = vec2list<double>(box_param);
-//}
-
-
-///* noisy_line(+START, +END, +IMGSEQ, +DIRSEQ)
-// * Samples points and checks if they're correct with a set probabilty   
-// * @POINTS = [[X, Y]]: a list of points of interest
-// * @RECTANGLE = the rectangle that closes the set of points
-// */
-//PREDICATE(noisy_line, 4){
-//    vector<int> start = list2vec<int>(A1, 3);
-//    vector<int> end = list2vec<int>(A2, 3);
-//    vector<int> diff = vec_subtract(start, end);    
-//    
-//    char *p1 = (char*) A3;
-//    const string mag_seq_add(p1); 
-//    vector<Mat> *mag_seq = str2ptr<vector<Mat>>(mag_seq_add);
-
-//    char *p2 = (char*) A4;
-//    const string dir_seq_add(p2); 
-//    vector<Mat> *dir_seq = str2ptr<vector<Mat>>(dir_seq_add);
-
-//    vector<double> start_mag_dir = get_mag_dir(dir_seq, mag_seq, start);
-
-//    //Sample n points along the target line
-//    //from k subsets of size q, if the number of sucesses is above p then return true
-//    int len = (int)vec_len(diff);
-//        
-//    double EPSILON = 0.1;
-//    double THRESHOLD = 0.9;
-//    double NOISE_ESTIMATE = 0.2;
-//    int K = len * (EPSILON / NOISE_ESTIMATE);  
-//    int q = K * (1 - NOISE_ESTIMATE);
-//    int p = 0;
-//    
-//    random_device rd;
-//    mt19937 gen(rd());
-//    uniform_int_distribution<> dis(0, len);
-//    for(int i = 0; i < K; i++){
-//        int r = dis(gen);
-//        vector<int> loc = start;
-//        for(int i = 0; i < 3; i++){
-//            loc[i] += r * (diff[i] / len);
-//        }      
-//        
-//        vector<double> t_mag_dir = get_mag_dir(dir_seq, mag_seq, loc);
-//        
-//        if((start_mag_dir[0] == t_mag_dir[0]) && (t_mag_dir[1] > THRESHOLD)){
-//            p++;
-//        }
-//    }
-//    
-//    if(p >= q){
-//        return TRUE;
-//    }else{
-//        return FALSE;
-//    }   
-//}
+    if(noisy_line(start, end, mag, dir)){
+        return TRUE;
+    }else{
+        return FALSE;
+    }   
+}
 
 
 /* noisy_line_image(+START, +END, +MAG, +DIR)
@@ -339,131 +222,131 @@ PREDICATE(noisy_line_image, 4){
 
 
 
-/* noisy_extend_line(+START, +END, +IMGSEQ, +DIRSEQ, +MAX_SIZE, -NEW_START, -NEW_END)
- * Samples points and checks if they're correct with a set probabilty
- * @POINTS = [[X, Y]]: a list of points of interest
- * @RECTANGLE = the rectangle that closes the set of points
- */
-PREDICATE(noisy_extend_line, 7){
-    vector<int> start = list2vec<int>(A1, 3);
-    vector<int> end = list2vec<int>(A2, 3);
-    vector<int> diff = vec_subtract(start, end);
-    int len = sqrt(diff[0] + diff[1] + diff[2]);
+///* noisy_extend_line(+START, +END, +IMGSEQ, +DIRSEQ, +MAX_SIZE, -NEW_START, -NEW_END)
+// * Samples points and checks if they're correct with a set probabilty
+// * @POINTS = [[X, Y]]: a list of points of interest
+// * @RECTANGLE = the rectangle that closes the set of points
+// */
+//PREDICATE(noisy_extend_line, 7){
+//    vector<int> start = list2vec<int>(A1, 3);
+//    vector<int> end = list2vec<int>(A2, 3);
+//    vector<int> diff = vec_subtract(start, end);
+//    int len = sqrt(diff[0] + diff[1] + diff[2]);
 
-    char *p1 = (char*) A3;
-    const string mag_seq_add(p1); 
-    vector<Mat> *mag_seq = str2ptr<vector<Mat>>(mag_seq_add);
+//    char *p1 = (char*) A3;
+//    const string mag_seq_add(p1); 
+//    vector<Mat> *mag_seq = str2ptr<vector<Mat>>(mag_seq_add);
 
-    char *p2 = (char*) A4;
-    const string dir_seq_add(p2); 
-    vector<Mat> *dir_seq = str2ptr<vector<Mat>>(dir_seq_add);
+//    char *p2 = (char*) A4;
+//    const string dir_seq_add(p2); 
+//    vector<Mat> *dir_seq = str2ptr<vector<Mat>>(dir_seq_add);
 
-    vector<double> start_mag_dir = get_mag_dir(start, mag_seq, dir_seq);
+//    vector<double> start_mag_dir = get_mag_dir(start, mag_seq, dir_seq);
 
-    //Sample n points along the target line
-    //from k subsets of size q, if the number of sucesses is above p then return true
-    double EPSILON = 0.1;
-    double THRESHOLD = 0.9;
-    double NOISE_ESTIMATE = 0.2;
-    int K = len * (EPSILON / NOISE_ESTIMATE);  
-    int q = K * (1 - NOISE_ESTIMATE);
-    int p = 0;
-    
-    //use a window, stop when it falls to below the target value
-    bool valid = true;
-    vector<int>new_start = list2vec<int>(A1, 3);
-    vector<bool>valid_counts(K);
-    
-    for(int k = 0; k < K; k++){
-        //cycle through one step at a time
-        for(int j = 0; j < 3; j++){
-            new_start[j] += (k - (K / 2)) * (diff[j] / len);
-        }
-        
-        vector<double> t_mag_dir = get_mag_dir(new_start, dir_seq, mag_seq);        
-                
-        if((start_mag_dir[0] == t_mag_dir[0]) && (t_mag_dir[1] > THRESHOLD)){
-            p++;
-            valid_counts[k] = true;
-            valid_counts[k] = false;
-        }
-    }
-    
-    int i = 1;
-    while(valid){
-        //cycle through one step at a time
-        for(int j = 0; j < 3; j++){
-            new_start[i] += i * (diff[j] / len);
-        }
-        
-        bool new_valid_point = false;
-        
-        vector<double> t_mag_dir = get_mag_dir(new_start, mag_seq, dir_seq);        
-        
-        if(similar_grad(start_mag_dir, t_mag_dir, THRESHOLD)){
-            p++;
-            new_valid_point = true;
-        }
-        if(!valid_counts[i % K] && new_valid_point){
-            p++;
-        }else{
-            p--;
-        }
-        
-        valid_counts[i % K] = new_valid_point;
-        
-        valid = p > q;
-    }
-    
-    // The terminal new_end value is the best edge estimate
-    valid = true;
-    vector<int>new_end = list2vec<int>(A2, 3);
-    
-    for(int k = 0; k < K; k++){
-        //cycle through one step at a time
-        for(int j = 0; j < 3; j++){
-            new_end[i] += (k - (K / 2)) * (-diff[j] / len);
-        }
-        
-        vector<double> t_mag_dir = get_mag_dir(new_end, mag_seq, dir_seq);        
-                
-        if(similar_grad(start_mag_dir, t_mag_dir, THRESHOLD)){
-            p++;
-            valid_counts[k] = true;
-        }else{
-            valid_counts[k] = false;
-        }
-    }
+//    //Sample n points along the target line
+//    //from k subsets of size q, if the number of sucesses is above p then return true
+//    double EPSILON = 0.1;
+//    double THRESHOLD = 0.9;
+//    double NOISE_ESTIMATE = 0.2;
+//    int K = len * (EPSILON / NOISE_ESTIMATE);  
+//    int q = K * (1 - NOISE_ESTIMATE);
+//    int p = 0;
+//    
+//    //use a window, stop when it falls to below the target value
+//    bool valid = true;
+//    vector<int>new_start = list2vec<int>(A1, 3);
+//    vector<bool>valid_counts(K);
+//    
+//    for(int k = 0; k < K; k++){
+//        //cycle through one step at a time
+//        for(int j = 0; j < 3; j++){
+//            new_start[j] += (k - (K / 2)) * (diff[j] / len);
+//        }
+//        
+//        vector<double> t_mag_dir = get_mag_dir(new_start, dir_seq, mag_seq);        
+//                
+//        if((start_mag_dir[0] == t_mag_dir[0]) && (t_mag_dir[1] > THRESHOLD)){
+//            p++;
+//            valid_counts[k] = true;
+//            valid_counts[k] = false;
+//        }
+//    }
+//    
+//    int i = 1;
+//    while(valid){
+//        //cycle through one step at a time
+//        for(int j = 0; j < 3; j++){
+//            new_start[i] += i * (diff[j] / len);
+//        }
+//        
+//        bool new_valid_point = false;
+//        
+//        vector<double> t_mag_dir = get_mag_dir(new_start, mag_seq, dir_seq);        
+//        
+//        if(similar_grad(start_mag_dir, t_mag_dir, THRESHOLD)){
+//            p++;
+//            new_valid_point = true;
+//        }
+//        if(!valid_counts[i % K] && new_valid_point){
+//            p++;
+//        }else{
+//            p--;
+//        }
+//        
+//        valid_counts[i % K] = new_valid_point;
+//        
+//        valid = p > q;
+//    }
+//    
+//    // The terminal new_end value is the best edge estimate
+//    valid = true;
+//    vector<int>new_end = list2vec<int>(A2, 3);
+//    
+//    for(int k = 0; k < K; k++){
+//        //cycle through one step at a time
+//        for(int j = 0; j < 3; j++){
+//            new_end[i] += (k - (K / 2)) * (-diff[j] / len);
+//        }
+//        
+//        vector<double> t_mag_dir = get_mag_dir(new_end, mag_seq, dir_seq);        
+//                
+//        if(similar_grad(start_mag_dir, t_mag_dir, THRESHOLD)){
+//            p++;
+//            valid_counts[k] = true;
+//        }else{
+//            valid_counts[k] = false;
+//        }
+//    }
 
-    
-    while(valid){
-        //cycle through one step at a time
-        for(int j = 0; j < 3; j++){
-            new_end[i] += i * (diff[j] / len);
-        }
-        
-        vector<double> t_mag_dir = get_mag_dir(new_end, mag_seq, dir_seq);        
-        
-        bool new_valid_point = false;
-        if(similar_grad(start_mag_dir, t_mag_dir, THRESHOLD)){
-            p++;
-            new_valid_point = true;
-        }
-        if(!valid_counts[i % K] && new_valid_point){
-            p++;
-        }else{
-            p--;
-        }
-        
-        valid_counts[i % K] = new_valid_point;
-        
-        valid = p > q;
-    }
-    
-    vector<double> double_start(new_start.begin(), new_start.end());            
-    A6 = vec2list(double_start);
-    vector<double> double_end(new_end.begin(), new_end.end());
-    A7 = vec2list(double_end);
-    return TRUE;
-}
+//    
+//    while(valid){
+//        //cycle through one step at a time
+//        for(int j = 0; j < 3; j++){
+//            new_end[i] += i * (diff[j] / len);
+//        }
+//        
+//        vector<double> t_mag_dir = get_mag_dir(new_end, mag_seq, dir_seq);        
+//        
+//        bool new_valid_point = false;
+//        if(similar_grad(start_mag_dir, t_mag_dir, THRESHOLD)){
+//            p++;
+//            new_valid_point = true;
+//        }
+//        if(!valid_counts[i % K] && new_valid_point){
+//            p++;
+//        }else{
+//            p--;
+//        }
+//        
+//        valid_counts[i % K] = new_valid_point;
+//        
+//        valid = p > q;
+//    }
+//    
+//    vector<double> double_start(new_start.begin(), new_start.end());            
+//    A6 = vec2list(double_start);
+//    vector<double> double_end(new_end.begin(), new_end.end());
+//    A7 = vec2list(double_end);
+//    return TRUE;
+//}
 
