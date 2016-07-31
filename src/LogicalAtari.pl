@@ -114,7 +114,16 @@ test_line_extend:-
 %    showimg_win(Mag_add, 'mag'),
     release_img(Img_add).    
 
+
+test_video_source:-
+    format(atom(Vid_file), 'data/~w', ['space_invaders.mp4']),
+    load_video(Vid_file, Vid_add),    
+    video2imgseq(Vid_add, Img_seq_add),
+    diff_seq(Img_seq_add, Diff_seq_add),
+    gradient_seq(Diff_seq_add, Mag_seq_add, Grad_seq_add).
     
+
+
 
 find_shapes(Diff_seq_add, [Resize_x, Resize_y], Shapes):-
 	resize_image(Diff_seq_add, 1234, [20, 20], Resize_img_add),

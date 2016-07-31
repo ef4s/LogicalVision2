@@ -25,28 +25,51 @@ using namespace cv;
 /* gradient_seq(+IMGSEQ, -Magnitude, -Direction)
  * get gradient of an image sequence IMGSEQ
  */
-PREDICATE(gradient_seq, 4) {
+PREDICATE(gradient_seq, 3) {
     char *p1 = (char*) A1;
     const string add_seq(p1);
     vector<Mat> *seq = str2ptr<vector<Mat>>(add_seq);
-    vector<Mat> *mag_seq;
-    vector<Mat> *dir_seq;
+    vector<Mat*> *mag_seq = new vector<Mat*>;
+    vector<Mat*> *dir_seq = new vector<Mat*>;
 
     for(vector<Mat>::iterator src = seq->begin(); src != seq->end(); src++){    
         Mat *mag, *dir;
         
         gradient_image(&(*src), mag, dir);
+//        cout << "BACK HERE" << endl;
+//        
+        cout << "Mag address: " << ptr2str(mag) << endl;
+        cout << "Dir address: " << ptr2str(dir) << endl;
         
-        mag_seq->push_back(*mag);
-        dir_seq->push_back(*dir);
+        cout << "SEQ: " << src->rows << ", " << src->cols << endl;
+        cout << "MAG: " << mag->rows << ", " << mag->cols << endl; 
+        cout << "DIR: " << dir->rows << ", " << dir->cols << endl;
+        for(int i=0; i<mag->rows; i++){
+            for(int j=0; j<mag->cols; j++){
+                double pix = mag->at<double>(i,j);
+//                if(pix != 0){
+                    cout << i << ", " << j << ": " << pix << endl;
+//                }
+            }
+        }
+
+
+//        cout << "Pix:" << mag->at<double>(0,0) << flush;  
+//        cout << "~HERE~" << flush;      
+//        cout << ", " << flush << dir->at<double>(0,0) << endl;
+        
+        mag_seq->push_back(mag);
+        dir_seq->push_back(dir);
         
     }
 
     string add_mag = ptr2str(mag_seq);
     A2 = PlTerm(add_mag.c_str());
+    cout << "Mag address: " << add_mag << endl;
 
     string add_dir = ptr2str(dir_seq);
     A3 = PlTerm(add_dir.c_str());
+    cout << "Dir address: " << add_dir << endl;
 
     return TRUE;
 }
@@ -63,10 +86,14 @@ PREDICATE(gradient_image, 3) {
     
     gradient_image(src, mag, dir);
         
+    cout << "BACK HERE" << endl;
     string add_mag = ptr2str(mag);
     A2 = PlTerm(add_mag.c_str());
+    cout << "Mag address: " << add_mag << endl;
+
     string add_dir = ptr2str(dir);
     A3 = PlTerm(add_dir.c_str());
+    cout << "Dir address: " << add_dir << endl;
 
     return TRUE;
 }

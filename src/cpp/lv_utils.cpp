@@ -64,24 +64,11 @@ double angle_diff(const double a1, const double a2){
 }
 
 bool similar_grad(const vector<double> d1, const vector<double> d2, const double threshold){
-//   bool b = (abs(d1[0] - d2[0]) >= threshold);
-//    cout << "C++Mag: " << abs(d1[0] - d2[0]) << ": " << d1[0] <<", " << d2[0];
     bool b = (abs(d2[0]) >= threshold);
-//    cout << "C++Mag: " << abs(d2[0]) << ":\t" << d1[0] <<"\t" << d2[0];
-//    if(b){ 
-//        cout << " true";
-//    }else{
-//        cout << " false";
-//    }
+    
     double ANGLE_THRESHOLD = 3.1415 / 2.0;
     bool c = (angle_diff(d1[1], d2[1]) <= ANGLE_THRESHOLD);
-//    cout << ", Dir: " << angle_diff(d1[1], d2[1]) << ": " << d1[1] <<" " <<  d2[1];
-//    if(c){ 
-//        cout << " true";
-//    }else{
-//        cout << " false";
-//    }        
-//    cout << endl;
+    
     return b && c;
 }
 
@@ -153,7 +140,11 @@ void gradient_image(Mat *src, Mat *mag, Mat *dir){
     int scale = 1;
     int delta = 0;
     int ddepth = CV_64F;
-
+    
+//    cout << "Source " << flush << src->at<double>(100,100) << endl;
+//    cout << "Source " << src->at<double>(0,0) << endl;
+    cout << "SEQ_INSIDE: " << src->rows << ", " << src->cols << endl;
+    
     mag = new Mat(src->size(), ddepth);
     dir = new Mat(src->size(), ddepth);
 
@@ -167,4 +158,11 @@ void gradient_image(Mat *src, Mat *mag, Mat *dir){
 
     addWeighted(sobel_x, 0.5, sobel_y, 0.5, 0, *mag);
     phase(sobel_x, sobel_y, *dir);
+    
+    cout << "Mag_inside address: " << ptr2str(mag) << endl;
+    cout << "Dir_inside address: " << ptr2str(dir) << endl;
+
+    cout << "MAG_INSIDE: " << mag->rows << ", " << mag->cols << endl; 
+    cout << "DIR_INSIDE: " << dir->rows << ", " << dir->cols << endl;   
+//    cout << "GRADIENT CALCULATED" << endl;
 }
