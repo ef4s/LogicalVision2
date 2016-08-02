@@ -120,7 +120,14 @@ test_video_source:-
     load_video(Vid_file, Vid_add),    
     video2imgseq(Vid_add, Img_seq_add),
     diff_seq(Img_seq_add, Diff_seq_add),
-    gradient_seq(Diff_seq_add, Mag_seq_add, Grad_seq_add).
+    gradient_seq(Diff_seq_add, Mag_seq_add, Dir_seq_add),
+    P1 = [142,157,100], 
+    P2 = [215,431,100],
+    P3 = [492,357,100],
+    P4 = [418,82,100],
+    Pts = [P1,P2,P3,P4],
+    sample_point(P1,Mag_seq_add,Dir_seq_add,[X_mag,X_dir]),
+    print(X_mag),print(X_dir).
     
 
 
@@ -218,7 +225,7 @@ sum_list_3d([[A,B,C]|L],[SA,SB,SC]):-
     SB is B + B1,
     SC is C + C1.
 
-similar_grad(P1,P2,Mag_add,Dir_add,Threshold):-
+similar_grad_image(P1,P2,Mag_add,Dir_add,Threshold):-
     sample_point_image(P1,Mag_add,Dir_add,[_,X_dir]),
     sample_point_image(P2,Mag_add,Dir_add,[Y_mag,Y_dir]),
     Mag is abs(Y_mag),
@@ -226,6 +233,16 @@ similar_grad(P1,P2,Mag_add,Dir_add,Threshold):-
 %    print('Mag is: '), print(Mag),print(', Dir is: '), print(Dir),
     Mag >  Threshold,
     Dir =<  3.1415 / 2.
+
+similar_grad(P1,P2,Mag_add,Dir_add,Threshold):-
+    sample_point(P1,Mag_add,Dir_add,[_,X_dir]),
+    sample_point(P2,Mag_add,Dir_add,[Y_mag,Y_dir]),
+    Mag is abs(Y_mag),
+    angle_diff(X_dir,Y_dir,Dir),  
+%    print('Mag is: '), print(Mag),print(', Dir is: '), print(Dir),
+    Mag >  Threshold,
+    Dir =<  3.1415 / 2.
+
 
 angle_diff(A1,A2,Diff):-
     C1 is (sin(A1) - sin(A2))**2,

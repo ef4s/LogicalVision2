@@ -51,8 +51,16 @@ vector<double>get_mag_dir(const vector<int>loc, const Mat *mag, const Mat *dir){
 vector<double>sample_point(const vector<int>loc, const Mat mag, const Mat dir) {
     vector<double> mag_dir(2);  
 
-    mag_dir[0] = dir.at<double>(loc[1],loc[0]);
-    mag_dir[1] = mag.at<double>(loc[1],loc[0]);
+    cout << "STARTING" << endl;
+
+    cout << dir.rows << ", " << dir.cols << endl;
+    cout << mag.rows << ", " << mag.cols << endl;
+
+    mag_dir[0] = mag.at<double>(loc[1],loc[0]);
+    cout << "HERE" << endl;
+    mag_dir[1] = dir.at<double>(loc[1],loc[0]);
+
+    cout << "DONE" << endl;
 
 	return mag_dir;
 }
@@ -136,17 +144,13 @@ bool noisy_line(const vector<int> start, const vector<int> end, const Mat *mag, 
 }
 
 
-void gradient_image(Mat *src, Mat *mag, Mat *dir){
+void gradient_image(Mat *src, Mat *mag1, Mat *dir1){
     int scale = 1;
     int delta = 0;
     int ddepth = CV_64F;
     
-//    cout << "Source " << flush << src->at<double>(100,100) << endl;
-//    cout << "Source " << src->at<double>(0,0) << endl;
-    cout << "SEQ_INSIDE: " << src->rows << ", " << src->cols << endl;
-    
-    mag = new Mat(src->size(), ddepth);
-    dir = new Mat(src->size(), ddepth);
+    Mat mag = Mat(src->size(), ddepth);
+    Mat dir = Mat(src->size(), ddepth);
 
     Mat sobel_x, sobel_y, src_adj;
 
@@ -156,13 +160,9 @@ void gradient_image(Mat *src, Mat *mag, Mat *dir){
     Sobel(src_adj, sobel_x, ddepth, 1, 0, 3, scale, delta, BORDER_DEFAULT);
     Sobel(src_adj, sobel_y, ddepth, 0, 1, 3, scale, delta, BORDER_DEFAULT);
 
-    addWeighted(sobel_x, 0.5, sobel_y, 0.5, 0, *mag);
-    phase(sobel_x, sobel_y, *dir);
+    addWeighted(sobel_x, 0.5, sobel_y, 0.5, 0, mag);
+    phase(sobel_x, sobel_y, dir);
     
-    cout << "Mag_inside address: " << ptr2str(mag) << endl;
-    cout << "Dir_inside address: " << ptr2str(dir) << endl;
-
-    cout << "MAG_INSIDE: " << mag->rows << ", " << mag->cols << endl; 
-    cout << "DIR_INSIDE: " << dir->rows << ", " << dir->cols << endl;   
-//    cout << "GRADIENT CALCULATED" << endl;
+    mag1 = &mag;
+    dir1 = &dir;
 }
