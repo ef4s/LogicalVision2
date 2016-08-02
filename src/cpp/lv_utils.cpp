@@ -51,16 +51,8 @@ vector<double>get_mag_dir(const vector<int>loc, const Mat *mag, const Mat *dir){
 vector<double>sample_point(const vector<int>loc, const Mat mag, const Mat dir) {
     vector<double> mag_dir(2);  
 
-    cout << "STARTING" << endl;
-
-    cout << dir.rows << ", " << dir.cols << endl;
-    cout << mag.rows << ", " << mag.cols << endl;
-
     mag_dir[0] = mag.at<double>(loc[1],loc[0]);
-    cout << "HERE" << endl;
     mag_dir[1] = dir.at<double>(loc[1],loc[0]);
-
-    cout << "DONE" << endl;
 
 	return mag_dir;
 }
@@ -144,14 +136,11 @@ bool noisy_line(const vector<int> start, const vector<int> end, const Mat *mag, 
 }
 
 
-void gradient_image(Mat *src, Mat *mag1, Mat *dir1){
+void gradient_image(Mat *src, Mat *mag, Mat *dir){
     int scale = 1;
     int delta = 0;
     int ddepth = CV_64F;
-    
-    Mat mag = Mat(src->size(), ddepth);
-    Mat dir = Mat(src->size(), ddepth);
-
+ 
     Mat sobel_x, sobel_y, src_adj;
 
     GaussianBlur(*src, src_adj, Size(5,5), 0, 0, BORDER_DEFAULT);
@@ -160,9 +149,6 @@ void gradient_image(Mat *src, Mat *mag1, Mat *dir1){
     Sobel(src_adj, sobel_x, ddepth, 1, 0, 3, scale, delta, BORDER_DEFAULT);
     Sobel(src_adj, sobel_y, ddepth, 0, 1, 3, scale, delta, BORDER_DEFAULT);
 
-    addWeighted(sobel_x, 0.5, sobel_y, 0.5, 0, mag);
-    phase(sobel_x, sobel_y, dir);
-    
-    mag1 = &mag;
-    dir1 = &dir;
+    addWeighted(sobel_x, 0.5, sobel_y, 0.5, 0, *mag);
+    phase(sobel_x, sobel_y, *dir);
 }

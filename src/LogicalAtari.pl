@@ -115,21 +115,33 @@ test_line_extend:-
     release_img(Img_add).    
 
 
-test_video_source:-
+test_video_source(IDX):-
     format(atom(Vid_file), 'data/~w', ['space_invaders.mp4']),
     load_video(Vid_file, Vid_add),    
     video2imgseq(Vid_add, Img_seq_add),
     diff_seq(Img_seq_add, Diff_seq_add),
     gradient_seq(Diff_seq_add, Mag_seq_add, Dir_seq_add),
-    P1 = [142,157,100], 
-    P2 = [215,431,100],
-    P3 = [492,357,100],
-    P4 = [418,82,100],
-    Pts = [P1,P2,P3,P4],
-    sample_point(P1,Mag_seq_add,Dir_seq_add,[X_mag,X_dir]),
-    print(X_mag),print(X_dir).
-    
+    seq_img(Diff_seq_add,IDX,Img_add),
+    showimg_win(Img_add,debug).
+%    P1 = [142,157,100], 
+%    P2 = [215,431,100],
+%    P3 = [492,357,100],
+%    P4 = [418,82,100],
+%    Pts = [P1,P2,P3,P4],
+%    print_point_sample([290, 110, 5],Mag_seq_add,Dir_seq_add),nl,
+%    print_point_sample([290, 110, 11],Mag_seq_add,Dir_seq_add),nl,
+%    print_point_sample([290, 110, 17],Mag_seq_add,Dir_seq_add),nl,
+%    print_point_sample([290, 110, 23],Mag_seq_add,Dir_seq_add),nl,
+%    print_point_sample([290, 110, 24],Mag_seq_add,Dir_seq_add),nl,
+%    print_point_sample([290, 110, 25],Mag_seq_add,Dir_seq_add),nl,
+%    print_point_sample([290, 110, 26],Mag_seq_add,Dir_seq_add),nl,
+%    print_point_sample([290, 110, 27],Mag_seq_add,Dir_seq_add),nl,
+%    print_point_sample([290, 110, 28],Mag_seq_add,Dir_seq_add),nl,
+%    print_point_sample([290, 110, 29],Mag_seq_add,Dir_seq_add),nl.
 
+print_point_sample(P,Mag_seq_add, Dir_seq_add):-
+    sample_point(P,Mag_seq_add,Dir_seq_add,[X_mag,X_dir]),
+    print(X_mag),print(','),print(X_dir).
 
 
 find_shapes(Diff_seq_add, [Resize_x, Resize_y], Shapes):-

@@ -29,16 +29,20 @@ PREDICATE(gradient_seq, 3) {
     char *p1 = (char*) A1;
     const string add_seq(p1);
     vector<Mat> *seq = str2ptr<vector<Mat>>(add_seq);
-    vector<Mat*> *mag_seq = new vector<Mat*>;
-    vector<Mat*> *dir_seq = new vector<Mat*>;
+    vector<Mat*> *mag_seq = new vector<Mat*>();
+    vector<Mat*> *dir_seq = new vector<Mat*>();
+    int ddepth = CV_64F;
 
     for(vector<Mat>::iterator src = seq->begin(); src != seq->end(); src++){    
-        Mat *mag, *dir;
-        
+        Mat *mag = new Mat(src->size(), ddepth);
+        Mat *dir = new Mat(src->size(), ddepth);
+
         gradient_image(&(*src), mag, dir);
 
         mag_seq->push_back(mag);
         dir_seq->push_back(dir);
+        
+//        cout << "Mag: " << mag->rows << ", " << mag->cols << ". Dir: " << dir->rows << ", " << dir->cols << endl;
         
     }
 
@@ -59,8 +63,11 @@ PREDICATE(gradient_image, 3) {
     const string add_img(p1);
     Mat *src = str2ptr<Mat>(add_img);
     
-    Mat *mag, *dir;
+    int ddepth = CV_64F;
     
+    Mat *mag = new Mat(src->size(), ddepth);
+    Mat *dir = new Mat(src->size(), ddepth);
+
     gradient_image(src, mag, dir);
         
     cout << "BACK HERE" << endl;
@@ -135,24 +142,17 @@ PREDICATE(diff_seq, 2) {
 * @GRAD: returned point
 */
 PREDICATE(sample_point, 4) {
-    cout << "HERE" << endl;
     vector<int> loc = list2vec<int>(A1, 3);
-    
-    cout << "HERE" << " " << loc[0] <<", " << loc[1] << ", " << loc[2] <<endl;
     
     char *p1 = (char*) A2;
     const string mag_seq_add(p1); 
-    vector<Mat> *mag_seq = str2ptr<vector<Mat>>(mag_seq_add);
-    Mat mag = mag_seq->at(loc[2]);    
+    vector<Mat*> *mag_seq = str2ptr<vector<Mat*>>(mag_seq_add);
+    Mat mag = *(mag_seq->at(loc[2]));
     
-    cout << "HERE" << endl;
-        
     char *p2 = (char*) A3;
     const string dir_seq_add(p2); 
-    vector<Mat> *dir_seq = str2ptr<vector<Mat>>(dir_seq_add);
-    Mat dir = dir_seq->at(loc[2]);    
-    
-    cout << "HERE" << endl;
+    vector<Mat*> *dir_seq = str2ptr<vector<Mat*>>(dir_seq_add);
+    Mat dir = *(dir_seq->at(loc[2]));    
     
 	return A4 = vec2list(sample_point(loc,mag,dir));
 }
