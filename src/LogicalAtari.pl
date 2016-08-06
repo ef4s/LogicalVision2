@@ -122,7 +122,9 @@ test_video_source(IDX):-
     diff_seq(Img_seq_add, Diff_seq_add),
     gradient_seq(Diff_seq_add, Mag_seq_add, Dir_seq_add),
     seq_img(Diff_seq_add,IDX,Img_add),
-    showimg_win(Img_add,debug).
+    showimg_win(Img_add,debug),
+%    release_img(Img_add).
+
 %    P1 = [142,157,100], 
 %    P2 = [215,431,100],
 %    P3 = [492,357,100],
@@ -138,6 +140,11 @@ test_video_source(IDX):-
 %    print_point_sample([290, 110, 27],Mag_seq_add,Dir_seq_add),nl,
 %    print_point_sample([290, 110, 28],Mag_seq_add,Dir_seq_add),nl,
 %    print_point_sample([290, 110, 29],Mag_seq_add,Dir_seq_add),nl.
+    release_video(Vid_add),
+    release_imgseq(Img_seq_add),
+    release_imgseq_grad(Mag_seq_add),
+    release_imgseq_grad(Dir_seq_add).
+
 
 print_point_sample(P,Mag_seq_add, Dir_seq_add):-
     sample_point(P,Mag_seq_add,Dir_seq_add,[X_mag,X_dir]),

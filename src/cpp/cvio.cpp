@@ -223,10 +223,25 @@ PREDICATE(release_imgseq, 1) {
         return LOAD_ERROR("release_video/1", 1, "ADD", "STRING");
 }
 
+/* release_imgseq(ADD)
+ * release an image sequence in stack
+ */
+PREDICATE(release_imgseq_grad, 1) {
+    term_t t1 = A1.ref;
+    char *p1;
+    if (PL_get_atom_chars(t1, &p1)) {
+        const string add(p1);
+        vector<Mat*> *imgseq = str2ptr<vector<Mat*>>(add);
+        delete imgseq;
+        return TRUE;
+    } else
+        return LOAD_ERROR("release_video/1", 1, "ADD", "STRING");
+}
+
 /* showimg_win(ADD, WINDOW_NAME)
  * show image in a window
  */
-    PREDICATE(showimg_win, 2) {
+PREDICATE(showimg_win, 2) {
     term_t t1 = A1.ref;
     term_t t2 = A2.ref;
     char *p1;
