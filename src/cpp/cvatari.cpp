@@ -28,22 +28,20 @@ using namespace cv;
 PREDICATE(gradient_seq, 3) {
     char *p1 = (char*) A1;
     const string add_seq(p1);
-    vector<Mat> *seq = str2ptr<vector<Mat>>(add_seq);
+    vector<Mat*> *seq = str2ptr<vector<Mat*>>(add_seq);
     vector<Mat*> *mag_seq = new vector<Mat*>();
     vector<Mat*> *dir_seq = new vector<Mat*>();
     int ddepth = CV_64F;
 
-    for(vector<Mat>::iterator src = seq->begin(); src != seq->end(); src++){    
-        Mat *mag = new Mat(src->size(), ddepth);
-        Mat *dir = new Mat(src->size(), ddepth);
+    for(vector<Mat*>::iterator src = seq->begin(); src != seq->end(); src++){  
+    
+        Mat *mag = new Mat((*src)->size(), ddepth);
+        Mat *dir = new Mat((*src)->size(), ddepth);
 
-        gradient_image(&(*src), mag, dir);
+        gradient_image(*src, mag, dir);
 
         mag_seq->push_back(mag);
         dir_seq->push_back(dir);
-        
-//        cout << "Mag: " << mag->rows << ", " << mag->cols << ". Dir: " << dir->rows << ", " << dir->cols << endl;
-        
     }
 
     string add_mag = ptr2str(mag_seq);
@@ -82,6 +80,36 @@ PREDICATE(gradient_image, 3) {
     return TRUE;
 }
 
+
+/* blur_image(+IMG_SEQ_ADD, +STEP_SIZE, -BLURRED_IMAGE)
+ * Applies guassian blurring to an image sequence
+ */
+PREDICATE(blur_seq, 3) {
+    char *p1 = (char*) A1;
+    const string add_seq(p1);
+    vector<Mat> *seq = str2ptr<vector<Mat>>(add_seq);
+    vector<Mat*> *blurred_seq = new vector<Mat*>();
+    
+    int step_size = (int) A2;
+
+    for(vector<Mat>::iterator src = seq->begin(); src != seq->end(); src++){    
+        Mat *blurred = new Mat(src->clone());
+
+        blur_image(&(*src), step_size, blurred);
+        
+//        cout << "src: " << src->rows << ", " << src->cols;
+//        cout << ", mat: " << blurred->rows << ", " << blurred->cols << endl;
+        
+        blurred_seq->push_back(blurred);
+    }
+
+    string add_blur = ptr2str(blurred_seq);
+    A3 = PlTerm(add_blur.c_str());
+
+//    cout << "BLURRING DONE" << endl;
+    
+    return TRUE;
+}
 
 /* resize_image(+IMGSEQ, +IMG, +[TARGET_SIZE_X, TARGET_SIZE_Y], -[RESIZED_IMAGE])
  * Resize an image
@@ -194,13 +222,13 @@ PREDICATE(noisy_line, 4){
     
     char *p1 = (char*) A3;
     const string mag_seq_add(p1); 
-    vector<Mat> *mag_seq = str2ptr<vector<Mat>>(mag_seq_add);
-    Mat *mag = &(mag_seq->at(start[2]));    
+    vector<Mat*> *mag_seq = str2ptr<vector<Mat*>>(mag_seq_add);
+    Mat *mag = mag_seq->at(start[2]);    
         
     char *p2 = (char*) A3;
     const string dir_seq_add(p2); 
-    vector<Mat> *dir_seq = str2ptr<vector<Mat>>(dir_seq_add);
-    Mat *dir = &(dir_seq->at(start[2]));    
+    vector<Mat*> *dir_seq = str2ptr<vector<Mat*>>(dir_seq_add);
+    Mat *dir = dir_seq->at(start[2]);    
 
     if(noisy_line(start, end, mag, dir)){
         return TRUE;

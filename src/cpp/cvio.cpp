@@ -398,6 +398,30 @@ PREDICATE(seq_img, 3) {
         return LOAD_ERROR("seq_img/3", 1, "SEQ", "STRING");
 }
 
+/* seq_img(SEQ, IDX, IMG_ADD)
+ * get an image (IMG) from image sequence (SEQ), starting from 0
+ */
+PREDICATE(seq_img_ptr, 3) {
+    char *p1 = (char*) A1;
+    const string seq_add(p1);
+    vector<Mat*> *src = str2ptr<vector<Mat*>>(seq_add);
+    
+    term_t t2 = A2.ref;
+    int p2;
+    if(!PL_get_integer(t2, &p2)){
+        return FALSE;
+    }
+    
+    Mat *img = src->at(p2);
+    
+//    cout << "Mat: " << img->rows << ", " << img->cols << endl;
+
+    string img_add = ptr2str(img);
+    A3 = PlTerm(img_add.c_str());
+    return TRUE;
+}
+
+
 /* close_window(WINDOW_NAME)
  * close a visualizing window
  */

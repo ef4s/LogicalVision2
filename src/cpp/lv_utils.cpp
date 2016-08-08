@@ -85,7 +85,6 @@ double vec_len(const vector<int> v){
 bool noisy_line(const vector<int> start, const vector<int> end, const Mat *mag, const Mat *dir){
     
 //    cout << start[0] << ","<< start[1] << ", "<< start[2] << ": " << end[0] << ", "<< end[1] << ", "<< end[2] << endl;
-    
     vector<int> diff = vec_subtract(end, start);
     double len = vec_len(diff);
     vector<double> norm_diff(3);
@@ -131,7 +130,7 @@ bool noisy_line(const vector<int> start, const vector<int> end, const Mat *mag, 
             return false;
         }
     }
-    
+
     return true;
 }
 
@@ -143,12 +142,16 @@ void gradient_image(Mat *src, Mat *mag, Mat *dir){
  
     Mat sobel_x, sobel_y, src_adj;
 
-    GaussianBlur(*src, src_adj, Size(5,5), 0, 0, BORDER_DEFAULT);
-    cvtColor(src_adj, src_adj, CV_BGR2GRAY);    /// Convert it to gray
+ //   GaussianBlur(*src, src_adj, Size(5,5), 0, 0, BORDER_DEFAULT);
+    cvtColor(*src, src_adj, CV_BGR2GRAY);    /// Convert it to gray
     
     Sobel(src_adj, sobel_x, ddepth, 1, 0, 3, scale, delta, BORDER_DEFAULT);
     Sobel(src_adj, sobel_y, ddepth, 0, 1, 3, scale, delta, BORDER_DEFAULT);
 
     addWeighted(sobel_x, 0.5, sobel_y, 0.5, 0, *mag);
     phase(sobel_x, sobel_y, *dir);
+}
+
+void blur_image(Mat *src, int step_size, Mat *blurred){
+    GaussianBlur(*src, *blurred, Size(step_size,step_size), 0, 0, BORDER_DEFAULT);
 }

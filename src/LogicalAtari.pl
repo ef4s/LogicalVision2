@@ -115,21 +115,33 @@ test_line_extend:-
     release_img(Img_add).    
 
 
-test_video_source(IDX):-
+test_video_source(IDX,BLUR):-
     format(atom(Vid_file), 'data/~w', ['space_invaders.mp4']),
     load_video(Vid_file, Vid_add),    
     video2imgseq(Vid_add, Img_seq_add),
+    print("done"),nl,
     diff_seq(Img_seq_add, Diff_seq_add),
-    gradient_seq(Diff_seq_add, Mag_seq_add, Dir_seq_add),
-    seq_img(Diff_seq_add,IDX,Img_add),
-    showimg_win(Img_add,debug),
-%    release_img(Img_add).
+    print("done"),nl,
+    blur_seq(Diff_seq_add,BLUR,Blur_seq_add),
+    print("done"),nl,
+    gradient_seq(Blur_seq_add, Mag_seq_add, Dir_seq_add),
+    print("done"),nl,
+    seq_img_ptr(Blur_seq_add,IDX,Img_add),
+    print("done"),nl,
+    seq_img_ptr(Mag_seq_add,IDX,Mag_add),  
+    print("done"),nl,
+    seq_img_ptr(Dir_seq_add,IDX,Dir_add),  
+    print("done"),nl,
 
-%    P1 = [142,157,100], 
-%    P2 = [215,431,100],
-%    P3 = [492,357,100],
-%    P4 = [418,82,100],
-%    Pts = [P1,P2,P3,P4],
+    P1 = [44,34,100], 
+    P2 = [221,33,100],
+    P3 = [221,130,100],
+    P4 = [44,130,100],
+    Pts = [P1,P2,P3,P4],
+    
+    line(P1,P2,Mag_seq_add,Dir_seq_add),
+%    line(P1,P2,Mag_add,Dir_add),
+%    draw_points_2d(Img_add, Pts, red),
 %    print_point_sample([290, 110, 5],Mag_seq_add,Dir_seq_add),nl,
 %    print_point_sample([290, 110, 11],Mag_seq_add,Dir_seq_add),nl,
 %    print_point_sample([290, 110, 17],Mag_seq_add,Dir_seq_add),nl,
@@ -140,8 +152,11 @@ test_video_source(IDX):-
 %    print_point_sample([290, 110, 27],Mag_seq_add,Dir_seq_add),nl,
 %    print_point_sample([290, 110, 28],Mag_seq_add,Dir_seq_add),nl,
 %    print_point_sample([290, 110, 29],Mag_seq_add,Dir_seq_add),nl.
+
+    showimg_win(Img_add,debug),
     release_video(Vid_add),
     release_imgseq(Img_seq_add),
+    release_imgseq_grad(Blur_seq_add),
     release_imgseq_grad(Mag_seq_add),
     release_imgseq_grad(Dir_seq_add).
 
@@ -218,7 +233,7 @@ line(Start,End,Mag_add,Dir_add):-
     distance(Start,End,Dist),
     mindist(MinDist),
     Dist >= MinDist,
-    noisy_line_image(Start,End,Mag_add,Dir_add).
+    noisy_line(Start,End,Mag_add,Dir_add).
     
 line_extend(Start,End,Mag_add,Dir_add,Start,NewEnd):-
     sample_extend(Start,End,NewEnd),
