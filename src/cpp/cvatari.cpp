@@ -68,14 +68,14 @@ PREDICATE(gradient_image, 3) {
 
     gradient_image(src, mag, dir);
         
-    cout << "BACK HERE" << endl;
+//    cout << "BACK HERE" << endl;
     string add_mag = ptr2str(mag);
     A2 = PlTerm(add_mag.c_str());
-    cout << "Mag address: " << mag << endl;
+//    cout << "Mag address: " << mag << endl;
 
     string add_dir = ptr2str(dir);
     A3 = PlTerm(add_dir.c_str());
-    cout << "Dir address: " << dir << endl;
+//    cout << "Dir address: " << dir << endl;
 
     return TRUE;
 }
@@ -137,6 +137,40 @@ PREDICATE(resize_image, 4) {
     return A4 = PlTerm(add.c_str());
 }
 
+
+/* resize_image(+IMG_SEQ_ADD, +STEP_SIZE, -BLURRED_IMAGE)
+ * Resizes images in an image sequence
+ */
+PREDICATE(resize_seq, 3) {
+    char *p1 = (char*) A1;
+    const string add_seq(p1);
+    vector<Mat*> *seq = str2ptr<vector<Mat*>>(add_seq);
+    vector<Mat*> *resized_seq = new vector<Mat*>();
+    
+    int step_size = (int) A2;
+    
+    int ddepth = CV_64F;
+
+    for(vector<Mat*>::iterator src = seq->begin(); src != seq->end(); src++){    
+        Mat *dst = new Mat(step_size, step_size, ddepth);
+
+        resize(**src, *dst, dst->size(), 0, 0, CV_INTER_AREA);
+        
+//        cout << "src: " << src->rows << ", " << src->cols;
+//        cout << ", mat: " << blurred->rows << ", " << blurred->cols << endl;
+        
+        resized_seq->push_back(dst);
+    }
+
+    string add_resized = ptr2str(resized_seq);
+    A3 = PlTerm(add_resized.c_str());
+
+//    cout << "BLURRING DONE" << endl;
+    
+    return TRUE;
+}
+
+
 /* diff_seq(+IMGSEQ, -DIFFSEQ)
  * difference an image sequence, REMEMBER TO RELEASE IT!
  */
@@ -156,7 +190,6 @@ PREDICATE(diff_seq, 2) {
         first_img = *it;
     }
     string add = ptr2str(newseq);
-    cout << add.c_str() << endl;
     return A2 = PlTerm(add.c_str());
 }
 
