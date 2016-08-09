@@ -120,32 +120,44 @@ test_video_source(IDX,BLUR):-
     load_video(Vid_file, Vid_add),    
     video2imgseq(Vid_add, Img_seq_add),
     release_video(Vid_add),
-%    print("done"),nl,
+    print("done"),nl,
     diff_seq(Img_seq_add, Diff_seq_add),
     release_imgseq(Img_seq_add),    
-
-    resize_seq(Diff_seq_add,10,Resized_seq_add),
+    print("done"),nl,
+%    resize_seq(Diff_seq_add,130,Resized_seq_add),
+    resize_seq(Diff_seq_add,130,Blur_seq_add),    
     release_imgseq(Diff_seq_add),    
-%    print("done"),nl,
-    blur_seq(Resized_seq_add,BLUR,Blur_seq_add),
-%    print("done"),nl,
+    print("done"),nl,
+%    blur_seq(Resized_seq_add,BLUR,Blur_seq_add),
+    print("done"),nl,
     gradient_seq(Blur_seq_add, Mag_seq_add, Dir_seq_add),
-%    print("done"),nl,
+    print("done"),nl,
     seq_img_ptr(Blur_seq_add,IDX,Img_add),
-%    print("done"),nl,
+    print("done"),nl,
     seq_img_ptr(Mag_seq_add,IDX,Mag_add),  
-%    print("done"),nl,
+    print("done"),nl,
     seq_img_ptr(Dir_seq_add,IDX,Dir_add),  
-%    print("done"),nl,
+    print("done"),nl,
 
-    P1 = [44,34,100], 
-    P2 = [221,34,100],
-    P3 = [221,130,100],
-    P4 = [44,130,100],
+%    P1 = [44,34,100], 
+%    P2 = [221,34,100],
+%    P3 = [221,130,100],
+%    P4 = [44,130,100],
+%    Pts = [P1,P2,P3,P4],
+    
+    P1 = [18,19,IDX], 
+    P2 = [88,19,IDX],
+    P3 = [88,81,IDX],
+    P4 = [18,81,IDX],
     Pts = [P1,P2,P3,P4],
     
-%    line(P1,P2,Mag_seq_add,Dir_seq_add),
-%    draw_points_2d(Img_add, Pts, red),
+%    print_point_sample(P1,Mag_seq_add, Dir_seq_add):-
+    
+    line(P1,P2,Mag_seq_add,Dir_seq_add), %~2/3 success
+    line(P2,P3,Mag_seq_add,Dir_seq_add), %~1/3 success
+    line(P3,P4,Mag_seq_add,Dir_seq_add), %~2/3 success
+    line(P4,P1,Mag_seq_add,Dir_seq_add), %~2/3 success
+    draw_points_2d(Img_add, Pts, red),
 %    print_point_sample([290, 110, 5],Mag_seq_add,Dir_seq_add),nl,
 %    print_point_sample([290, 110, 11],Mag_seq_add,Dir_seq_add),nl,
 %    print_point_sample([290, 110, 17],Mag_seq_add,Dir_seq_add),nl,
@@ -157,7 +169,7 @@ test_video_source(IDX,BLUR):-
 %    print_point_sample([290, 110, 28],Mag_seq_add,Dir_seq_add),nl,
 %    print_point_sample([290, 110, 29],Mag_seq_add,Dir_seq_add),nl.
 
-    showimg_win(Img_r_add,debug),
+    showimg_win(Img_add,debug),
 %    showimg_win(Img_add,debug),
     release_imgseq_grad(Blur_seq_add),
     release_imgseq_grad(Mag_seq_add),

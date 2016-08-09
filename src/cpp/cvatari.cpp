@@ -298,7 +298,7 @@ PREDICATE(noisy_line, 4){
     vector<Mat*> *mag_seq = str2ptr<vector<Mat*>>(mag_seq_add);
     Mat *mag = mag_seq->at(start[2]);    
         
-    char *p2 = (char*) A3;
+    char *p2 = (char*) A4;
     const string dir_seq_add(p2); 
     vector<Mat*> *dir_seq = str2ptr<vector<Mat*>>(dir_seq_add);
     Mat *dir = dir_seq->at(start[2]);    
