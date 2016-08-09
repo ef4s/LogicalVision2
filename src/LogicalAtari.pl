@@ -119,10 +119,15 @@ test_video_source(IDX,BLUR):-
     format(atom(Vid_file), 'data/~w', ['space_invaders.mp4']),
     load_video(Vid_file, Vid_add),    
     video2imgseq(Vid_add, Img_seq_add),
+    release_video(Vid_add),
 %    print("done"),nl,
     diff_seq(Img_seq_add, Diff_seq_add),
+    release_imgseq(Img_seq_add),    
+
+    resize_seq(Diff_seq_add,10,Resized_seq_add),
+    release_imgseq(Diff_seq_add),    
 %    print("done"),nl,
-    blur_seq(Diff_seq_add,BLUR,Blur_seq_add),
+    blur_seq(Resized_seq_add,BLUR,Blur_seq_add),
 %    print("done"),nl,
     gradient_seq(Blur_seq_add, Mag_seq_add, Dir_seq_add),
 %    print("done"),nl,
@@ -152,11 +157,8 @@ test_video_source(IDX,BLUR):-
 %    print_point_sample([290, 110, 28],Mag_seq_add,Dir_seq_add),nl,
 %    print_point_sample([290, 110, 29],Mag_seq_add,Dir_seq_add),nl.
 
-    resize_image(Blur_seq_add,IDX,[10,10],Img_r_add),
     showimg_win(Img_r_add,debug),
 %    showimg_win(Img_add,debug),
-    release_video(Vid_add),
-    release_imgseq(Img_seq_add),
     release_imgseq_grad(Blur_seq_add),
     release_imgseq_grad(Mag_seq_add),
     release_imgseq_grad(Dir_seq_add).

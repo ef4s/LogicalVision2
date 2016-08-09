@@ -103,6 +103,43 @@ PREDICATE(blur_seq, 3) {
         blurred_seq->push_back(blurred);
     }
 
+    cout << "vid seq len: " << seq->size() << endl;
+    cout << "blurred seq len: " << seq->size() << endl;
+
+    string add_blur = ptr2str(blurred_seq);
+    A3 = PlTerm(add_blur.c_str());
+
+//    cout << "BLURRING DONE" << endl;
+    
+    return TRUE;
+}
+
+
+/* blur_image(+IMG_SEQ_ADD, +STEP_SIZE, -BLURRED_IMAGE)
+ * Applies guassian blurring to an image sequence
+ */
+PREDICATE(blur_seq_ptr, 3) {
+    char *p1 = (char*) A1;
+    const string add_seq(p1);
+    vector<Mat*> *seq = str2ptr<vector<Mat*>>(add_seq);
+    vector<Mat*> *blurred_seq = new vector<Mat*>();
+    
+    int step_size = (int) A2;
+
+    for(vector<Mat*>::iterator src = seq->begin(); src != seq->end(); src++){    
+        Mat *blurred = new Mat((*src)->clone());
+
+        blur_image(*src, step_size, blurred);
+        
+//        cout << "src: " << src->rows << ", " << src->cols;
+//        cout << ", mat: " << blurred->rows << ", " << blurred->cols << endl;
+        
+        blurred_seq->push_back(blurred);
+    }
+
+    cout << "vid seq len: " << seq->size() << endl;
+    cout << "blurred seq len: " << seq->size() << endl;
+
     string add_blur = ptr2str(blurred_seq);
     A3 = PlTerm(add_blur.c_str());
 
@@ -120,6 +157,9 @@ PREDICATE(resize_image, 4) {
     vector<Mat> *seq = str2ptr<vector<Mat>>(add_seq);
 
     int img = (int) A2;
+ 
+    cout << "seq len: " << seq->size() << endl;
+ 
     vector<int> target_sz = list2vec<int>(A3, 2);
 
     int ddepth = CV_16S;
@@ -144,17 +184,17 @@ PREDICATE(resize_image, 4) {
 PREDICATE(resize_seq, 3) {
     char *p1 = (char*) A1;
     const string add_seq(p1);
-    vector<Mat*> *seq = str2ptr<vector<Mat*>>(add_seq);
+    vector<Mat> *seq = str2ptr<vector<Mat>>(add_seq);
     vector<Mat*> *resized_seq = new vector<Mat*>();
     
     int step_size = (int) A2;
     
     int ddepth = CV_64F;
 
-    for(vector<Mat*>::iterator src = seq->begin(); src != seq->end(); src++){    
+    for(vector<Mat>::iterator src = seq->begin(); src != seq->end(); src++){    
         Mat *dst = new Mat(step_size, step_size, ddepth);
 
-        resize(**src, *dst, dst->size(), 0, 0, CV_INTER_AREA);
+        resize(*src, *dst, dst->size(), 0, 0, CV_INTER_AREA);
         
 //        cout << "src: " << src->rows << ", " << src->cols;
 //        cout << ", mat: " << blurred->rows << ", " << blurred->cols << endl;
