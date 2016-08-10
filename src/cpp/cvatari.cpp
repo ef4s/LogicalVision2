@@ -235,7 +235,7 @@ PREDICATE(diff_seq, 2) {
 
 
 
-/* sample_point(+IMGSEQ, +DIRSEQ, +POINT, -GRAD)
+/* sample_point(+POINT,+MAGSEQ, +DIRSEQ,  -GRAD)
 * Sample a point and return a gradient object
 * @MAGSEQ = Address of the gradient magnitude sequence
 * @DIRSEQ = Address of the gradient direction sequence

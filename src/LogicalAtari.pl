@@ -140,7 +140,8 @@ test_video_source(IDX,BLUR):-
     print("done"),nl,
 
     %% SAMPLE POINTS PER FRAME
-%    random_point(
+    random_line_sample([130,130],IDX,Mag_seq_add,Dir_seq_add,Point),
+    print("FINAL POINT"),print(Point),nl,
     %% FIT LINE 
     
     %% EXEND LINE
@@ -377,20 +378,18 @@ calc_coords(L,A1,A2, [X,Y,Z]):-
     X is integer(L2 * sin(A2)),
     Y is integer(L2 * cos(A2)).
 
-calc_coords_2d(L,A1,A2, [X,Y,0]):-
-    X is integer(L * sin(A2)),
-    Y is integer(L * cos(A2)).
+calc_coords_2d(L,A,[X,Y]):-
+    X is integer(L * sin(A)),
+    Y is integer(L * cos(A)).
 
 
 random_point([X,Y,Z],Len,Dest):-
     % Random point without enforcing bounds
     random_radian(Dir1),
-    random_radian(Dir2),
-    calc_coords_2d(Len,Dir1,Dir2,[Dx,Dy,Dz]),
+    calc_coords_2d(Len,Dir1,[Dx,Dy]),
     Nx is X + Dx,
     Ny is Y + Dy,
-    Nz is Z + Dz,
-    Dest = [Nx,Ny,Nz].
+    Dest = [Nx,Ny,Z].
     
 random_point([X,Y,Z],[MaxX, MaxY, MaxZ],Len,Dest):-
     % Random point with enforcing bounds
@@ -401,13 +400,28 @@ random_point([X,Y,Z],[MaxX, MaxY, MaxZ],Len,Dest):-
     Nz is min(max(Tz,0),MaxZ),
     Dest = [Nx,Ny,Nz].
     
-random_line_sample([MaxX, MaxY], P):-
-    random(Loc),
-    L is Loc * 4,
-    Wall is integer(L),
-    Frac is L - Wall,
-    
-    
-    
-    random(Dir1),
+random_loc([MaxX, MaxY], [X,Y]):-
+    random(Xf),
+    X is integer(Xf * MaxX),
+    random(Yf),
+    Y is integer(Yf * MaxY).
 
+random_line_sample(Bounds,Z,Mag_add,Dir_add,Point):-
+    random_loc(Bounds,[X,Y]),
+    random_radian(Dir),
+    Start = [X,Y,Z],
+    print(Start),print(' '),print(Dir),nl,
+    random_line_sample_ex(Bounds,Start,Dir,Mag_add,Dir_add,Point).    
+    
+random_line_sample_ex([MaxX,MaxY],[Sx,Sy,Z],Dir,Mag_add,Dir_add,Point):-
+    print([Sx,Sy,Z]),nl,
+    sample_point([Sx,Sy,Z],Mag_add,Dir_add,[Mag,Dir]),
+    Mag > 0,
+    calc_coords_2d(1,Dir,[Dx,Dy]),
+    Nx is min(max(Sx + Dx,0),MaxX),
+    Ny is min(max(Sy + Dy,0),MaxY),
+    not(Nx == Sx, Ny == Sy),
+    Dest = [Nx,Ny].
+    
+    
+    
