@@ -68,9 +68,10 @@ bool similar_grad(const vector<double> d1, const vector<double> d2, const double
     
 //    cout << "\t\t" << d1[0] << ","<< d1[1] <<  ": " << d2[0] << ", "<< d2[1] << endl;
     
-    double ANGLE_THRESHOLD = 3.1415 / 2.0;
-    bool c = (angle_diff(d1[1], d2[1]) <= ANGLE_THRESHOLD);
-    
+//    double ANGLE_THRESHOLD = 3.1415 / 2.0;
+//    bool c = (angle_diff(d1[1], d2[1]) <= ANGLE_THRESHOLD);
+    bool c = true;
+        
     return b && c;
 }
 

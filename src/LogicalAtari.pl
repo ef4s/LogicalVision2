@@ -3,7 +3,7 @@
 	load_foreign_library(foreign('libs/cvdraw.so')),
 	load_foreign_library(foreign('libs/cvatari.so')).
 	
-mindist(15).
+mindist(20).
 
 
 run_test(W):-
@@ -129,7 +129,7 @@ test_video_source(IDX,BLUR):-
     release_imgseq(Diff_seq_add),    
     print("done"),nl,
 %    blur_seq(Resized_seq_add,BLUR,Blur_seq_add),
-    print("done"),nl,
+%    print("done"),nl,
     gradient_seq(Blur_seq_add, Mag_seq_add, Dir_seq_add),
     print("done"),nl,
     seq_img_ptr(Blur_seq_add,IDX,Img_add),
@@ -138,6 +138,18 @@ test_video_source(IDX,BLUR):-
     print("done"),nl,
     seq_img_ptr(Dir_seq_add,IDX,Dir_add),  
     print("done"),nl,
+
+    %% SAMPLE POINTS PER FRAME
+%    random_point(
+    %% FIT LINE 
+    
+    %% EXEND LINE
+    
+    %% FIND RECTANGLE
+    
+    %% ADD CENTER TO BACKGROUND KNOWLEDGE
+    
+    %% FIND RULES TO FIT MOTION PATH OF RECTANGLE CENTER
 
 %    P1 = [44,34,100], 
 %    P2 = [221,34,100],
@@ -151,13 +163,17 @@ test_video_source(IDX,BLUR):-
     P4 = [18,81,IDX],
     Pts = [P1,P2,P3,P4],
     
+    PQ2 = [44,19,IDX],
+    
+    line_extend(P1,PQ2,Mag_seq_add,Dir_seq_add,Q1,Q2),
+%    print("Q1 = "), print(Q1), print(", Q2 = "), print(Q2),nl,
 %    print_point_sample(P1,Mag_seq_add, Dir_seq_add):-
     
-    line(P1,P2,Mag_seq_add,Dir_seq_add), %~2/3 success
-    line(P2,P3,Mag_seq_add,Dir_seq_add), %~1/3 success
-    line(P3,P4,Mag_seq_add,Dir_seq_add), %~2/3 success
-    line(P4,P1,Mag_seq_add,Dir_seq_add), %~2/3 success
-    draw_points_2d(Img_add, Pts, red),
+%    line(P1,P2,Mag_seq_add,Dir_seq_add), %~2/3 success
+%    line(P2,P3,Mag_seq_add,Dir_seq_add), %~1/3 success
+%    line(P3,P4,Mag_seq_add,Dir_seq_add), %~2/3 success
+%    line(P4,P1,Mag_seq_add,Dir_seq_add), %~2/3 success
+    draw_points_2d(Img_add, [P1, PQ2], red),
 %    print_point_sample([290, 110, 5],Mag_seq_add,Dir_seq_add),nl,
 %    print_point_sample([290, 110, 11],Mag_seq_add,Dir_seq_add),nl,
 %    print_point_sample([290, 110, 17],Mag_seq_add,Dir_seq_add),nl,
@@ -180,27 +196,24 @@ print_point_sample(P,Mag_seq_add, Dir_seq_add):-
     sample_point(P,Mag_seq_add,Dir_seq_add,[X_mag,X_dir]),
     print(X_mag),print(','),print(X_dir).
 
-
-find_shapes(Diff_seq_add, [Resize_x, Resize_y], Shapes):-
-	resize_image(Diff_seq_add, 1234, [20, 20], Resize_img_add),
-	gradient_image(Diff_seq_add, 1234, Mag_add, Dir_add),
-	findall(Shape, find_shape(Mag_add, Dir_add, Shape), Shapes).
-
-find_shape(Mag_add, Dir_add, Shape):-
-	random_point_on_line(Point),
-	matching_point(Point, Mag_add, Dir_add, Point2),
-	prove_line(Point, Point2).
-	
+%find_square(Pts,Mag_add,Dir_add,Square):-
+%    [P1,P2,P3,P4] = Pts,
+%    line(P1,P2,Mag_add,Dir_add),
+%    line(P1,P4,Mag_add,Dir_add),
+%    corner(P1,P2,P4,Mag_add,Dir_add),
+%    line(P2,P3,Mag_add,Dir_add),
+%    corner(P2,P1,P3,Mag_add,Dir_add),
+%    line(P3,P4,Mag_add,Dir_add),
+%    corner(P3,P2,P4,Mag_add,Dir_add),
+%    corner(P4,P1,P3,Mag_add,Dir_add),
+%    Square = [P1,P2,P3,P4].
+    
 find_square(Pts,Mag_add,Dir_add,Square):-
     [P1,P2,P3,P4] = Pts,
     line(P1,P2,Mag_add,Dir_add),
     line(P1,P4,Mag_add,Dir_add),
-    corner(P1,P2,P4,Mag_add,Dir_add),
     line(P2,P3,Mag_add,Dir_add),
-    corner(P2,P1,P3,Mag_add,Dir_add),
     line(P3,P4,Mag_add,Dir_add),
-    corner(P3,P2,P4,Mag_add,Dir_add),
-    corner(P4,P1,P3,Mag_add,Dir_add),
     Square = [P1,P2,P3,P4].
 
 all_lines(Pts,Mag_add,Dir_add,Lines):-
@@ -250,13 +263,17 @@ line(Start,End,Mag_add,Dir_add):-
     Dist >= MinDist,
     noisy_line(Start,End,Mag_add,Dir_add).
     
-line_extend(Start,End,Mag_add,Dir_add,Start,NewEnd):-
-    sample_extend(Start,End,NewEnd),
-    line(Start,NewEnd,Mag_add,Dir_add).
+    
+line_extend(Start,End,Mag_add,Dir_add,NewStart,NewEnd):-
+    sample_extend(Start,End,NewEnd2),
+    line(Start,NewEnd2,Mag_add,Dir_add),
+    line_extend(Start,NewEnd2,Mag_add,Dir_add,NewStart,NewEnd).
 
-line_extend(Start,End,Mag_add,Dir_add,NewStart,End):-
-    sample_extend(End,Start,NewStart),
-    line(NewStart,End,Mag_add,Dir_add).
+line_extend(Start,End,Mag_add,Dir_add,NewStart,NewEnd):-
+    sample_extend(End,Start,NewStart2),
+    line(NewStart2,End,Mag_add,Dir_add),
+    line_extend(NewStart2,End,Mag_add,Dir_add,NewStart,NewEnd).
+
 
 
 shape_center(Pts,Center):-
@@ -299,12 +316,15 @@ angle_diff(A1,A2,Diff):-
     Diff is acos((2.0 - C1 - C2)/2.0).
 
 sample_between([Sx,Sy,Sz],[Ex,Ey,Ez],[X,Y,Z]):-
-    X is round(Sx + ((Ex - Sx) / 2)),
-    Y is round(Sy + ((Ey - Sy) / 2)),
-    Z is round(Sz + ((Ez - Sz) / 2)),
+    sample_between([Sx,Sy,Sz],[Ex,Ey,Ez], 0.5,[X,Y,Z]),
     % Conditions ensure we don't get stuck
     not((X = Sx, Y = Sy, Z = Sz)),
     not((X = Ex, Y = Ey, Z = Ez)).
+    
+sample_between([Sx,Sy,Sz],[Ex,Ey,Ez], Pct,[X,Y,Z]):-
+    X is round(Sx + ((Ex - Sx) * Pct)),
+    Y is round(Sy + ((Ey - Sy) * Pct)),
+    Z is round(Sz + ((Ez - Sz) * Pct)).
 
 coord_diff([X1,Y1,Z1],[X2,Y2,Z2],[X,Y,Z]):-
     X is X1 - X2,
@@ -380,4 +400,14 @@ random_point([X,Y,Z],[MaxX, MaxY, MaxZ],Len,Dest):-
     Ny is min(max(Ty,0),MaxY),
     Nz is min(max(Tz,0),MaxZ),
     Dest = [Nx,Ny,Nz].
+    
+random_line_sample([MaxX, MaxY], P):-
+    random(Loc),
+    L is Loc * 4,
+    Wall is integer(L),
+    Frac is L - Wall,
+    
+    
+    
+    random(Dir1),
 
