@@ -5,116 +5,6 @@
 	
 mindist(20).
 
-
-run_test(W):-
-    format(atom(Vid_file), 'data/~w', [W]),
-%    format(atom(Out_file), 'results/~w_R.pl', [W]),
-    load_video(Vid_file, Vid_add),    
-    video2imgseq(Vid_add, Img_seq_add),
-    size_3d(Vid_add, _, _, _),
-    diff_seq(Img_seq_add, Diff_seq_add),
-    resize_image(Diff_seq_add, 1234, [20, 20], Resize_img_add),
-    gradient_image(Diff_seq_add, 1234, _, _),
-    showimg_win(Resize_img_add, resized).
-%    sample_point(Img_seq_add, [1, 1, 1], VAR),
-%    write(VAR),
-%    line_points([1, 1, 1], [1, 1, 1], [Width, Height, Depth], Pts),
-%    sample_line(Img_seq_add, [0, 164, 1], [1, 0, 0], 10, Pts),
-%    sample_line(Img_seq_add, [86, 86, 0], [0, 0, 1], 10, Pts),
-%    write(Pts).
-%    draw_points(Img_seq_add, Pts, 'r'),
-%    draw_line(Img_seq_add, [1, 1, 1], [100, 100, 100], 'red'),
-%    showvid_win(Img_seq_add, debug).
-
-test_line:-
-    format(atom(Img_file), 'data/~w.jpg', ['line']),
-    load_img(Img_file, Img_add),
-    P1 = [150,201,100],
-    P2 = [450,201,100],
-    P3 = [160,201,100],
-    draw_points_2d(Img_add, [P1,P2], red),
-    gradient_image(Img_add,Mag_add,Dir_add),
-%    print(Dir_add),
-%    print(Mag_add),
-%    sample_point_image(Dir_add,Mag_add,P1,X),
-%    print(X),
-    showimg_win(Img_add, 'debug'),
-    line(P3,P2,Mag_add,Dir_add),
-%    line(P1,P2,Dir_add,Mag_add),
-%    showimg_win(Dir_add, 'dir'),
-%    showimg_win(Mag_add, 'mag'),
-    release_img(Img_add).    
-
-test_dashed_line:-
-    format(atom(Img_file), 'data/~w.jpg', ['dashed_line']),
-    load_img(Img_file, Img_add),
-    P1 = [150,175,100],
-    P2 = [455,180,100],
-    draw_points_2d(Img_add, [P1,P2], red),
-    gradient_image(Img_add,Mag_add,Dir_add),
-%    print(Dir_add),
-%    print(Mag_add),
-%    sample_point_image(Dir_add,Mag_add,P1,X),
-%    print(X),
-    showimg_win(Img_add, 'debug'),
-%    similar_grad(P1,P2,Dir_add,Mag_add,0.1),
-%     adjacent(P1,P2),
-
-    line(P1,P2,Mag_add,Dir_add),
-%    corner(P1,Dir_add,Mag_add),
-%    showimg_win(Dir_add, 'dir'),
-%    showimg_win(Mag_add, 'mag'),
-    release_img(Img_add).    
-
-test_square:-
-    format(atom(Img_file), 'data/~w.jpg', ['6']),
-    load_img(Img_file, Img_add),
-    gradient_image(Img_add,Mag_add,Dir_add),
-    
-    P1 = [142,157,100], 
-    P2 = [215,431,100],
-    P3 = [492,357,100],
-    P4 = [418,82,100],
-%    Pts = [P1,P2,P3,P4,P5,P6],
-    Pts = [P1,P2,P3,P4],
-%    Pts = [P1,P2,P3,P6],
-
-    find_square(Pts,Mag_add,Dir_add,Square),
-    print(Square),
-    nl,
-    shape_center(Pts,Center),
-    print(Center),
-
-    draw_points_2d(Img_add, Pts, red),
-    draw_points_2d(Img_add, [Center], blue),
-    showimg_win(Img_add, 'debug'),
-
-    release_img(Img_add).    
-
-test_line_extend:-
-    format(atom(Img_file), 'data/~w.jpg', ['line']),
-    load_img(Img_file, Img_add),
-    P1 = [150,201,100],
-    P2 = [450,201,100],
-    draw_points_2d(Img_add, [P1,P2], red),
-    gradient_image(Img_add,Mag_add,Dir_add),
-%    print(Dir_add),
-%    print(Mag_add),
-%    sample_point_image(Dir_add,Mag_add,P1,X),
-%    print(X),
-    line(P1,P2,Dir_add,Mag_add),
-    print("P1 = "),print(P1),print(", P2 = "),print(P2),nl,
-    line_extend(P1,P2,Dir_add,Mag_add,Q1,Q2),
-    print("Q1 = "),print(Q1),print(", Q2 = "),print(Q2),nl,
-    line_extend(Q1,Q2,Dir_add,Mag_add,R1,R2),
-    print("R1 = "),print(R1),print(", R2 = "),print(R2),nl,
-    showimg_win(Img_add, 'debug'),
-
-%    showimg_win(Dir_add, 'dir'),
-%    showimg_win(Mag_add, 'mag'),
-    release_img(Img_add).    
-
-
 test_video_source(IDX,BLUR):-
     format(atom(Vid_file), 'data/~w', ['space_invaders.mp4']),
     load_video(Vid_file, Vid_add),    
@@ -140,8 +30,10 @@ test_video_source(IDX,BLUR):-
     print("done"),nl,
 
     %% SAMPLE POINTS PER FRAME
-    random_line_sample([130,130],IDX,Mag_seq_add,Dir_seq_add,Point),
-    print("FINAL POINT"),print(Point),nl,
+    random_line_sample([129,129],IDX,Mag_seq_add,Dir_seq_add,P1),
+    random_line_sample([129,129],IDX,Mag_seq_add,Dir_seq_add,P2),
+    random_line_sample([129,129],IDX,Mag_seq_add,Dir_seq_add,P3),
+    random_line_sample([129,129],IDX,Mag_seq_add,Dir_seq_add,P4),
     %% FIT LINE 
     
     %% EXEND LINE
@@ -152,29 +44,24 @@ test_video_source(IDX,BLUR):-
     
     %% FIND RULES TO FIT MOTION PATH OF RECTANGLE CENTER
 
-%    P1 = [44,34,100], 
-%    P2 = [221,34,100],
-%    P3 = [221,130,100],
-%    P4 = [44,130,100],
-%    Pts = [P1,P2,P3,P4],
-    
-    P1 = [18,19,IDX], 
-    P2 = [88,19,IDX],
-    P3 = [88,81,IDX],
-    P4 = [18,81,IDX],
     Pts = [P1,P2,P3,P4],
     
-    PQ2 = [44,19,IDX],
-    
-    line_extend(P1,PQ2,Mag_seq_add,Dir_seq_add,Q1,Q2),
-%    print("Q1 = "), print(Q1), print(", Q2 = "), print(Q2),nl,
-%    print_point_sample(P1,Mag_seq_add, Dir_seq_add):-
-    
-%    line(P1,P2,Mag_seq_add,Dir_seq_add), %~2/3 success
-%    line(P2,P3,Mag_seq_add,Dir_seq_add), %~1/3 success
-%    line(P3,P4,Mag_seq_add,Dir_seq_add), %~2/3 success
-%    line(P4,P1,Mag_seq_add,Dir_seq_add), %~2/3 success
-    draw_points_2d(Img_add, [P1, PQ2], red),
+%    P1 = [18,19,IDX], 
+%    P2 = [88,19,IDX],
+%    P3 = [88,81,IDX],
+%    P4 = [18,81,IDX],
+%    Pts = [P1,P2,P3,P4],
+%    
+%    PQ2 = [44,19,IDX],
+%    
+%%    line_extend(P1,PQ2,Mag_seq_add,Dir_seq_add,Q1,Q2),
+%%    print_point_sample(P1,Mag_seq_add, Dir_seq_add):-
+%    
+%%    line(P1,P2,Mag_seq_add,Dir_seq_add), %~2/3 success
+%%    line(P2,P3,Mag_seq_add,Dir_seq_add), %~1/3 success
+%%    line(P3,P4,Mag_seq_add,Dir_seq_add), %~2/3 success
+%%    line(P4,P1,Mag_seq_add,Dir_seq_add), %~2/3 success
+    draw_points_2d(Img_add, Pts, red),
 %    print_point_sample([290, 110, 5],Mag_seq_add,Dir_seq_add),nl,
 %    print_point_sample([290, 110, 11],Mag_seq_add,Dir_seq_add),nl,
 %    print_point_sample([290, 110, 17],Mag_seq_add,Dir_seq_add),nl,
@@ -401,27 +288,57 @@ random_point([X,Y,Z],[MaxX, MaxY, MaxZ],Len,Dest):-
     Dest = [Nx,Ny,Nz].
     
 random_loc([MaxX, MaxY], [X,Y]):-
+    random(A), A >= 0.5,
+    random(Xf),
+    Xg = round(Xf),
+    X is integer(Xg * MaxX),
+    random(Yf),
+    Y is integer(Yf * MaxY).
+
+random_loc([MaxX, MaxY], [X,Y]):-
     random(Xf),
     X is integer(Xf * MaxX),
     random(Yf),
-    Y is integer(Yf * MaxY).
+    Yg = round(Yf),
+    Y is integer(Yg * MaxY).
+
 
 random_line_sample(Bounds,Z,Mag_add,Dir_add,Point):-
     random_loc(Bounds,[X,Y]),
     random_radian(Dir),
     Start = [X,Y,Z],
-    print(Start),print(' '),print(Dir),nl,
-    random_line_sample_ex(Bounds,Start,Dir,Mag_add,Dir_add,Point).    
+    random_line_sample_ex(Bounds,Start,Dir,Mag_add,Dir_add,P),
+    (Start = P -> 
+        random_line_sample(Bounds,Start,Dir,Mag_add,Dir_add,Point);
+        P = Point),
+    print(Start),print(' '),print(Point),nl.
+         
     
 random_line_sample_ex([MaxX,MaxY],[Sx,Sy,Z],Dir,Mag_add,Dir_add,Point):-
-    print([Sx,Sy,Z]),nl,
-    sample_point([Sx,Sy,Z],Mag_add,Dir_add,[Mag,Dir]),
-    Mag > 0,
-    calc_coords_2d(1,Dir,[Dx,Dy]),
+%    print([Sx,Sy,Z]),nl,
+    sample_point([Sx,Sy,Z],Mag_add,Dir_add,[Mag,_]),
+%    sample_point([Sx,Sy,Z],Mag_add,Dir_add,Q),
+%    print("SP"),nl,
+    AMag is abs(Mag),
+%    print("AMAG"),print(AMag),nl,
+    AMag =< 0,
+%    print("amag test"),nl,
+    mindist(L),
+%    print("mindist"),print(L),print(Dir),nl,
+    calc_coords_2d(L,Dir,[Dx,Dy]),
+%    print("calc coords"),nl,
     Nx is min(max(Sx + Dx,0),MaxX),
+%    print("nx"),print(Nx),nl,
     Ny is min(max(Sy + Dy,0),MaxY),
-    not(Nx == Sx, Ny == Sy),
-    Dest = [Nx,Ny].
+%    print("ny"),print(Ny),nl,
+    not((Nx == Sx, Ny == Sy)),
+%    print("not"),nl,
+    P = [Nx,Ny,Z],
+%    print("p"),nl,
+    random_line_sample_ex([MaxX,MaxY],P,Dir,Mag_add,Dir_add,Point).
+    
+random_line_sample_ex(_,Point,_,_,_,Point).
+    
     
     
     
