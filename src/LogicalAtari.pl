@@ -3,49 +3,41 @@
 	load_foreign_library(foreign('libs/cvdraw.so')),
 	load_foreign_library(foreign('libs/cvatari.so')).
 	
-mindist(20).
+mindist(5).
 
-test_video_source(IDX,BLUR):-
+test_video_source(IDX,BLUR,RESIZE):-
     format(atom(Vid_file), 'data/~w', ['space_invaders.mp4']),
     load_video(Vid_file, Vid_add),    
     video2imgseq(Vid_add, Img_seq_add),
     release_video(Vid_add),
-    print("done"),nl,
     diff_seq(Img_seq_add, Diff_seq_add),
     release_imgseq(Img_seq_add),    
-    print("done"),nl,
-%    resize_seq(Diff_seq_add,130,Resized_seq_add),
-    resize_seq(Diff_seq_add,130,Blur_seq_add),    
+    resize_seq(Diff_seq_add,RESIZE,Blur_seq_add),    
     release_imgseq(Diff_seq_add),    
-    print("done"),nl,
 %    blur_seq(Resized_seq_add,BLUR,Blur_seq_add),
-%    print("done"),nl,
     gradient_seq(Blur_seq_add, Mag_seq_add, Dir_seq_add),
-    print("done"),nl,
     seq_img_ptr(Blur_seq_add,IDX,Img_add),
-    print("done"),nl,
-    seq_img_ptr(Mag_seq_add,IDX,Mag_add),  
-    print("done"),nl,
-    seq_img_ptr(Dir_seq_add,IDX,Dir_add),  
-    print("done"),nl,
 
     %% SAMPLE POINTS PER FRAME
-    random_line_sample([129,129],IDX,Mag_seq_add,Dir_seq_add,P1),
-    random_line_sample([129,129],IDX,Mag_seq_add,Dir_seq_add,P2),
-    random_line_sample([129,129],IDX,Mag_seq_add,Dir_seq_add,P3),
-    random_line_sample([129,129],IDX,Mag_seq_add,Dir_seq_add,P4),
+    RESIZE2 is RESIZE - 1,
+%    random_line_sample([RESIZE2,RESIZE2],IDX,Mag_seq_add,Dir_seq_add,P1),
+%    random_line_sample([RESIZE2,RESIZE2],IDX,Mag_seq_add,Dir_seq_add,P2),
+%    random_line_sample([RESIZE2,RESIZE2],IDX,Mag_seq_add,Dir_seq_add,P3),
+%    random_line_sample([RESIZE2,RESIZE2],IDX,Mag_seq_add,Dir_seq_add,P4),
+
     %% FIT LINE 
+    
+%    find_line([RESIZE2,RESIZE2],IDX,Mag_seq_add,Dir_seq_add,Line),
     
     %% EXEND LINE
     
     %% FIND RECTANGLE
+    find_square([RESIZE2,RESIZE2],IDX,Mag_seq_add,Dir_seq_add,Square),
     
     %% ADD CENTER TO BACKGROUND KNOWLEDGE
     
     %% FIND RULES TO FIT MOTION PATH OF RECTANGLE CENTER
 
-    Pts = [P1,P2,P3,P4],
-    
 %    P1 = [18,19,IDX], 
 %    P2 = [88,19,IDX],
 %    P3 = [88,81,IDX],
@@ -55,23 +47,13 @@ test_video_source(IDX,BLUR):-
 %    PQ2 = [44,19,IDX],
 %    
 %%    line_extend(P1,PQ2,Mag_seq_add,Dir_seq_add,Q1,Q2),
-%%    print_point_sample(P1,Mag_seq_add, Dir_seq_add):-
-%    
 %%    line(P1,P2,Mag_seq_add,Dir_seq_add), %~2/3 success
 %%    line(P2,P3,Mag_seq_add,Dir_seq_add), %~1/3 success
 %%    line(P3,P4,Mag_seq_add,Dir_seq_add), %~2/3 success
 %%    line(P4,P1,Mag_seq_add,Dir_seq_add), %~2/3 success
-    draw_points_2d(Img_add, Pts, red),
-%    print_point_sample([290, 110, 5],Mag_seq_add,Dir_seq_add),nl,
-%    print_point_sample([290, 110, 11],Mag_seq_add,Dir_seq_add),nl,
-%    print_point_sample([290, 110, 17],Mag_seq_add,Dir_seq_add),nl,
-%    print_point_sample([290, 110, 23],Mag_seq_add,Dir_seq_add),nl,
-%    print_point_sample([290, 110, 24],Mag_seq_add,Dir_seq_add),nl,
-%    print_point_sample([290, 110, 25],Mag_seq_add,Dir_seq_add),nl,
-%    print_point_sample([290, 110, 26],Mag_seq_add,Dir_seq_add),nl,
-%    print_point_sample([290, 110, 27],Mag_seq_add,Dir_seq_add),nl,
-%    print_point_sample([290, 110, 28],Mag_seq_add,Dir_seq_add),nl,
-%    print_point_sample([290, 110, 29],Mag_seq_add,Dir_seq_add),nl.
+%    draw_points_2d(Img_add, Pts, red),    
+%    draw_points_2d(Img_add, Line, yellow),
+    draw_points_2d(Img_add, Square, green),
 
     showimg_win(Img_add,debug),
 %    showimg_win(Img_add,debug),
@@ -79,10 +61,18 @@ test_video_source(IDX,BLUR):-
     release_imgseq_grad(Mag_seq_add),
     release_imgseq_grad(Dir_seq_add).
 
+find_line(Bounds,Z,Mag_seq_add,Dir_seq_add,Line):-
+    random_line_sample(Bounds,Z,Mag_seq_add,Dir_seq_add,P1),
+    find_line(P1,Bounds,Z,Mag_seq_add,Dir_seq_add,Line).
 
-print_point_sample(P,Mag_seq_add, Dir_seq_add):-
-    sample_point(P,Mag_seq_add,Dir_seq_add,[X_mag,X_dir]),
-    print(X_mag),print(','),print(X_dir).
+find_line(P1,Bounds,Z,Mag_seq_add,Dir_seq_add,Line):-
+    random_line_sample(Bounds,Z,Mag_seq_add,Dir_seq_add,P2),
+    (line(P1,P2,Mag_seq_add,Dir_seq_add) ->  
+        line_extend(P1,P2,Mag_seq_add,Dir_seq_add,Q1,Q2),
+        Line = [Q1,Q2];
+%        Line = [P1,P2];
+        find_line(Bounds,Z,Mag_seq_add,Dir_seq_add,Line)).
+
 
 %find_square(Pts,Mag_add,Dir_add,Square):-
 %    [P1,P2,P3,P4] = Pts,
@@ -96,38 +86,33 @@ print_point_sample(P,Mag_seq_add, Dir_seq_add):-
 %    corner(P4,P1,P3,Mag_add,Dir_add),
 %    Square = [P1,P2,P3,P4].
     
-find_square(Pts,Mag_add,Dir_add,Square):-
-    [P1,P2,P3,P4] = Pts,
-    line(P1,P2,Mag_add,Dir_add),
-    line(P1,P4,Mag_add,Dir_add),
-    line(P2,P3,Mag_add,Dir_add),
-    line(P3,P4,Mag_add,Dir_add),
+find_square(Bounds,Z,Mag_seq_add,Dir_seq_add,Square):-
+    find_line(Bounds,Z,Mag_seq_add,Dir_seq_add,[P1,P2]),
+    find_line(P1,Bounds,Z,Mag_seq_add,Dir_seq_add,[P1,P3]),
+    find_line(P2,Bounds,Z,Mag_seq_add,Dir_seq_add,[P2,P4]),
+    line(P3,P4,Mag_seq_add,Dir_seq_add),
     Square = [P1,P2,P3,P4].
 
-all_lines(Pts,Mag_add,Dir_add,Lines):-
-    findall(X,
-        (subsetZ(X,Pts), 
-        length(X,2),
-        [P1,P2] = X,
-        line(P1,P2,Mag_add,Dir_add)),
-        Lines).
+%all_lines(Pts,Mag_add,Dir_add,Lines):-
+%    findall(X,
+%        (subsetZ(X,Pts), 
+%        length(X,2),
+%        [P1,P2] = X,
+%        line(P1,P2,Mag_add,Dir_add)),
+%        Lines).
 
-all_corners(C,Pts,Mag_add,Dir_add,Corners):-  
-    findall(X,
-        (subsetZ(X,Pts), 
-        length(X,2),
-        [C1,C2] = X,
-        corner(C,C1,C2,Mag_add,Dir_add)),
-        Corners),
-    print('**'),print(Corners),print('**').
+%all_corners(C,Pts,Mag_add,Dir_add,Corners):-  
+%    findall(X,
+%        (subsetZ(X,Pts), 
+%        length(X,2),
+%        [C1,C2] = X,
+%        corner(C,C1,C2,Mag_add,Dir_add)),
+%        Corners).
 
 corner(C,C1,C2,Mag_add,Dir_add):-
     C \= C1, C \= C2, C1 \= C2, 
     line(C,C1,Mag_add,Dir_add),
     line(C,C2,Mag_add,Dir_add).    
-
-line1(Start,End,Mag_add,Dir_add):-
-    line(Start,End,Mag_add,Dir_add).
 
 line(Start,End,Mag_add,Dir_add):-
     Start \= End,
@@ -151,7 +136,6 @@ line(Start,End,Mag_add,Dir_add):-
     Dist >= MinDist,
     noisy_line(Start,End,Mag_add,Dir_add).
     
-    
 line_extend(Start,End,Mag_add,Dir_add,NewStart,NewEnd):-
     sample_extend(Start,End,NewEnd2),
     line(Start,NewEnd2,Mag_add,Dir_add),
@@ -161,8 +145,6 @@ line_extend(Start,End,Mag_add,Dir_add,NewStart,NewEnd):-
     sample_extend(End,Start,NewStart2),
     line(NewStart2,End,Mag_add,Dir_add),
     line_extend(NewStart2,End,Mag_add,Dir_add,NewStart,NewEnd).
-
-
 
 shape_center(Pts,Center):-
     sum_list_3d(Pts, [A1,B1,C1]),
@@ -184,7 +166,6 @@ similar_grad_image(P1,P2,Mag_add,Dir_add,Threshold):-
     sample_point_image(P2,Mag_add,Dir_add,[Y_mag,Y_dir]),
     Mag is abs(Y_mag),
     angle_diff(X_dir,Y_dir,Dir),  
-%    print('Mag is: '), print(Mag),print(', Dir is: '), print(Dir),
     Mag >  Threshold,
     Dir =<  3.1415 / 2.
 
@@ -193,7 +174,6 @@ similar_grad(P1,P2,Mag_add,Dir_add,Threshold):-
     sample_point(P2,Mag_add,Dir_add,[Y_mag,Y_dir]),
     Mag is abs(Y_mag),
     angle_diff(X_dir,Y_dir,Dir),  
-%    print('Mag is: '), print(Mag),print(', Dir is: '), print(Dir),
     Mag >  Threshold,
     Dir =<  3.1415 / 2.
 
@@ -256,8 +236,8 @@ subsetZ(L, [_|S]) :-
 
 random_radian(Radian):-
     % Returns a number in (0, 2*pi)
-    random(Dir1),
-    Radian is (Dir1 - 0.5) * 3.1415 * 2.
+    Pi2 is 2 * pi,
+    random(0, Pi2, Radian).
 
 calc_coords(L,A1,A2, [X,Y,Z]):-
     Z is integer(L * sin(A1)),
@@ -287,58 +267,78 @@ random_point([X,Y,Z],[MaxX, MaxY, MaxZ],Len,Dest):-
     Nz is min(max(Tz,0),MaxZ),
     Dest = [Nx,Ny,Nz].
     
-random_loc([MaxX, MaxY], [X,Y]):-
-    random(A), A >= 0.5,
-    random(Xf),
-    Xg = round(Xf),
-    X is integer(Xg * MaxX),
-    random(Yf),
-    Y is integer(Yf * MaxY).
+% Random walls in lower left quadrant.
+random_edge_point([MaxX, MaxY], Dir, [X,Y]):-
+    Dir > 0,
+    Dir =< pi / 2,
+    random(Wall), 
+    (Wall > 0.5 -> 
+        X is 0,
+        random(0, MaxY,Y);
+        Y is 0,
+        random(0, MaxX,X)).
+        
+% Random walls in upper left quadrant.
+random_edge_point([MaxX, MaxY], Dir, [X,Y]):-
+    Dir > pi / 2,
+    Dir =< pi,
+    random(Wall), 
+    (Wall > 0.5 -> 
+        X is 0,
+        random(0, MaxY,Y);
+        Y is MaxY,
+        random(0, MaxX,X)).
 
-random_loc([MaxX, MaxY], [X,Y]):-
-    random(Xf),
-    X is integer(Xf * MaxX),
-    random(Yf),
-    Yg = round(Yf),
-    Y is integer(Yg * MaxY).
-
+% Random walls in upper right quadrant.
+random_edge_point([MaxX, MaxY], Dir, [X,Y]):-
+    Dir > pi,
+    Dir =< (pi * 3 / 2),
+    random(Wall), 
+    (Wall > 0.5 -> 
+        X is MaxX,
+        random(0, MaxY,Y);
+        Y is MaxY,
+        random(0, MaxX,X)).
+        
+% Random walls in lower right quadrant.
+random_edge_point([MaxX, MaxY], Dir, [X,Y]):-
+    Dir > (pi * 3 / 2),
+    Dir =< (pi * 2),
+    random(Wall), 
+    (Wall > 0.5 -> 
+        X is MaxX,
+        random(0, MaxY,Y);
+        Y is 0,
+        random(0, MaxX,X)).
 
 random_line_sample(Bounds,Z,Mag_add,Dir_add,Point):-
-    random_loc(Bounds,[X,Y]),
     random_radian(Dir),
+    random_edge_point(Bounds,Dir,[X,Y]),
     Start = [X,Y,Z],
     random_line_sample_ex(Bounds,Start,Dir,Mag_add,Dir_add,P),
     (Start = P -> 
-        random_line_sample(Bounds,Start,Dir,Mag_add,Dir_add,Point);
+        random_line_sample_ex(Bounds,Start,Dir,Mag_add,Dir_add,Point);
         P = Point),
-    print(Start),print(' '),print(Point),nl.
+    not(point_on_edge(Point,Bounds)).
          
     
 random_line_sample_ex([MaxX,MaxY],[Sx,Sy,Z],Dir,Mag_add,Dir_add,Point):-
-%    print([Sx,Sy,Z]),nl,
     sample_point([Sx,Sy,Z],Mag_add,Dir_add,[Mag,_]),
-%    sample_point([Sx,Sy,Z],Mag_add,Dir_add,Q),
-%    print("SP"),nl,
     AMag is abs(Mag),
-%    print("AMAG"),print(AMag),nl,
     AMag =< 0,
-%    print("amag test"),nl,
     mindist(L),
-%    print("mindist"),print(L),print(Dir),nl,
     calc_coords_2d(L,Dir,[Dx,Dy]),
-%    print("calc coords"),nl,
-    Nx is min(max(Sx + Dx,0),MaxX),
-%    print("nx"),print(Nx),nl,
-    Ny is min(max(Sy + Dy,0),MaxY),
-%    print("ny"),print(Ny),nl,
+    Nx is Sx + Dx, between(0, MaxX, Nx),
+    Ny is Sy + Dy, between(0, MaxY, Ny),
     not((Nx == Sx, Ny == Sy)),
-%    print("not"),nl,
     P = [Nx,Ny,Z],
-%    print("p"),nl,
     random_line_sample_ex([MaxX,MaxY],P,Dir,Mag_add,Dir_add,Point).
     
 random_line_sample_ex(_,Point,_,_,_,Point).
-    
+
+
+point_on_edge([X,Y,_],[MaxX,MaxY]):-
+    (X =< 0; X >= MaxX; Y =< 0; Y >= MaxY).
     
     
     
