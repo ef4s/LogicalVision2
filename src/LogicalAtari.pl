@@ -3,7 +3,7 @@
 	load_foreign_library(foreign('libs/cvdraw.so')),
 	load_foreign_library(foreign('libs/cvatari.so')).
 	
-mindist(5).
+mindist(2).
 
 test_video_source(IDX,BLUR,RESIZE):-
     format(atom(Vid_file), 'data/~w', ['space_invaders.mp4']),
@@ -27,12 +27,13 @@ test_video_source(IDX,BLUR,RESIZE):-
 
     %% FIT LINE 
     
-%    find_line([RESIZE2,RESIZE2],IDX,Mag_seq_add,Dir_seq_add,Line),
-    
+    find_line([RESIZE2,RESIZE2],IDX,Mag_seq_add,Dir_seq_add,Line),
+    writeln(Line),
+    [P1,P2] = Line,
     %% EXEND LINE
     
     %% FIND RECTANGLE
-    find_square([RESIZE2,RESIZE2],IDX,Mag_seq_add,Dir_seq_add,Square),
+%    find_square([RESIZE2,RESIZE2],IDX,Mag_seq_add,Dir_seq_add,Square),
     
     %% ADD CENTER TO BACKGROUND KNOWLEDGE
     
@@ -51,9 +52,10 @@ test_video_source(IDX,BLUR,RESIZE):-
 %%    line(P2,P3,Mag_seq_add,Dir_seq_add), %~1/3 success
 %%    line(P3,P4,Mag_seq_add,Dir_seq_add), %~2/3 success
 %%    line(P4,P1,Mag_seq_add,Dir_seq_add), %~2/3 success
-%    draw_points_2d(Img_add, Pts, red),    
+    draw_points_2d(Img_add, [P1], green),        
+    draw_points_2d(Img_add, [P2], red),
 %    draw_points_2d(Img_add, Line, yellow),
-    draw_points_2d(Img_add, Square, green),
+%    draw_points_2d(Img_add, Square, green),
 
     showimg_win(Img_add,debug),
 %    showimg_win(Img_add,debug),
@@ -62,15 +64,21 @@ test_video_source(IDX,BLUR,RESIZE):-
     release_imgseq_grad(Dir_seq_add).
 
 find_line(Bounds,Z,Mag_seq_add,Dir_seq_add,Line):-
+    writeln("Entering find_line"),
     random_line_sample(Bounds,Z,Mag_seq_add,Dir_seq_add,P1),
+    writeln("First line sample"),
     find_line(P1,Bounds,Z,Mag_seq_add,Dir_seq_add,Line).
 
 find_line(P1,Bounds,Z,Mag_seq_add,Dir_seq_add,Line):-
+    writeln("Entering find_line_2"),
     random_line_sample(Bounds,Z,Mag_seq_add,Dir_seq_add,P2),
+    writeln("Second line sample"),
     (line(P1,P2,Mag_seq_add,Dir_seq_add) ->  
-        line_extend(P1,P2,Mag_seq_add,Dir_seq_add,Q1,Q2),
+        writeln("TRUE"),
+        line_extend(P1,P2,Bounds,Mag_seq_add,Dir_seq_add,Q1,Q2),
         Line = [Q1,Q2];
 %        Line = [P1,P2];
+        writeln("FALSE"),
         find_line(Bounds,Z,Mag_seq_add,Dir_seq_add,Line)).
 
 
@@ -86,28 +94,24 @@ find_line(P1,Bounds,Z,Mag_seq_add,Dir_seq_add,Line):-
 %    corner(P4,P1,P3,Mag_add,Dir_add),
 %    Square = [P1,P2,P3,P4].
     
+%find_square(Bounds,Z,Mag_seq_add,Dir_seq_add,Square):-
+%    find_line(Bounds,Z,Mag_seq_add,Dir_seq_add,[P1,P2]),
+%    find_line(P1,Bounds,Z,Mag_seq_add,Dir_seq_add,[P1,P3]),
+%    find_line(P2,Bounds,Z,Mag_seq_add,Dir_seq_add,[P2,P4]),
+%    line(P3,P4,Mag_seq_add,Dir_seq_add),
+%    Square = [P1,P2,P3,P4].
+
 find_square(Bounds,Z,Mag_seq_add,Dir_seq_add,Square):-
+    mindist(MinDist),
     find_line(Bounds,Z,Mag_seq_add,Dir_seq_add,[P1,P2]),
-    find_line(P1,Bounds,Z,Mag_seq_add,Dir_seq_add,[P1,P3]),
-    find_line(P2,Bounds,Z,Mag_seq_add,Dir_seq_add,[P2,P4]),
-    line(P3,P4,Mag_seq_add,Dir_seq_add),
-    Square = [P1,P2,P3,P4].
-
-%all_lines(Pts,Mag_add,Dir_add,Lines):-
-%    findall(X,
-%        (subsetZ(X,Pts), 
-%        length(X,2),
-%        [P1,P2] = X,
-%        line(P1,P2,Mag_add,Dir_add)),
-%        Lines).
-
-%all_corners(C,Pts,Mag_add,Dir_add,Corners):-  
-%    findall(X,
-%        (subsetZ(X,Pts), 
-%        length(X,2),
-%        [C1,C2] = X,
-%        corner(C,C1,C2,Mag_add,Dir_add)),
-%        Corners).
+    find_line(Bounds,Z,Mag_seq_add,Dir_seq_add,[Q1,Q3]),
+    adjacent(P1,Q1,MinDist),
+    find_line(Bounds,Z,Mag_seq_add,Dir_seq_add,[R2,R4]),
+    adjacent(P2,R2,MinDist),
+    find_line(Bounds,Z,Mag_seq_add,Dir_seq_add,[S3,S4]),
+    adjacent(Q3,S3,MinDist),
+    adjacent(R4,S4,MinDist),
+    Square = [P1,P2,Q1,Q3,R2,R4,S3,S4].
 
 corner(C,C1,C2,Mag_add,Dir_add):-
     C \= C1, C \= C2, C1 \= C2, 
@@ -136,15 +140,28 @@ line(Start,End,Mag_add,Dir_add):-
     Dist >= MinDist,
     noisy_line(Start,End,Mag_add,Dir_add).
     
-line_extend(Start,End,Mag_add,Dir_add,NewStart,NewEnd):-
-    sample_extend(Start,End,NewEnd2),
-    line(Start,NewEnd2,Mag_add,Dir_add),
-    line_extend(Start,NewEnd2,Mag_add,Dir_add,NewStart,NewEnd).
+line_extend(Start,End,Bounds,Mag_add,Dir_add,NewStart,NewEnd):-
+    line_extend_e(Start,End,Bounds,Mag_add,Dir_add,NewEnd),
+    line_extend_s(Start,NewEnd,Bounds,Mag_add,Dir_add,NewStart).
+    
+line_extend_e(Start,End,Bounds,Mag_add,Dir_add,NewEnd):-
+    writeln("Entering extend end"),
+    sample_extend(Start,End,Bounds,NewEnd2),
+    (line(End,NewEnd2,Mag_add,Dir_add)->
+        writeln("Extended end"),
+        line_extend_e(Start,NewEnd2,Bounds,Mag_add,Dir_add,NewEnd);
+        writeln("Stopped extending end"),writeln([Start,NewEnd2]),
+        NewEnd = End).
 
-line_extend(Start,End,Mag_add,Dir_add,NewStart,NewEnd):-
-    sample_extend(End,Start,NewStart2),
-    line(NewStart2,End,Mag_add,Dir_add),
-    line_extend(NewStart2,End,Mag_add,Dir_add,NewStart,NewEnd).
+line_extend_s(Start,End,Bounds,Mag_add,Dir_add,NewStart):-
+    writeln("Entering extend start"),
+    sample_extend(End,Start,Bounds,NewStart2),
+    writeln('**********************'),
+    (line(NewStart2,Start,Mag_add,Dir_add)->
+        writeln("Extended start"),
+        line_extend_s(NewStart2,End,Bounds,Mag_add,Dir_add,NewStart);
+        writeln("Stopped extending start"),writeln([NewStart2,End]),
+        NewStart = Start).
 
 shape_center(Pts,Center):-
     sum_list_3d(Pts, [A1,B1,C1]),
@@ -205,14 +222,15 @@ normalise_vector([A,B,C],[X,Y,Z]):-
     Y is B / L,
     Z is C / L.
 
-sample_extend(Start,End,[X,Y,Z]):-
+sample_extend(Start,End,Bounds,[X,Y,Z]):-
     coord_diff(End,Start,Diff),
     [Sx, Sy, Sz] = End,
     normalise_vector(Diff,[Dx,Dy,Dz]),
     mindist(MinDist),
     X is round(Sx + (MinDist * Dx)),
     Y is round(Sy + (MinDist * Dy)),
-    Z is round(Sz + (MinDist * Dz)).
+    Z is round(Sz + (MinDist * Dz)),
+    point_within_bounds([X,Y,Z],Bounds).
 
 adjacent(P1,P2,Dist):-
     distance(P1,P2,D1),
@@ -336,9 +354,10 @@ random_line_sample_ex([MaxX,MaxY],[Sx,Sy,Z],Dir,Mag_add,Dir_add,Point):-
     
 random_line_sample_ex(_,Point,_,_,_,Point).
 
-
 point_on_edge([X,Y,_],[MaxX,MaxY]):-
     (X =< 0; X >= MaxX; Y =< 0; Y >= MaxY).
     
+point_within_bounds([X,Y,_],[MaxX,MaxY]):-
+    X >= 0, X =< MaxX, Y >= 0, Y =< MaxY.
     
     
