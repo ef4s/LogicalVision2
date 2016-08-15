@@ -4,6 +4,7 @@
 	load_foreign_library(foreign('libs/cvatari.so')).
 	
 mindist(2).
+line([0,0,0],[0,0,0]).
 
 test_video_source(IDX,BLUR,RESIZE):-
     format(atom(Vid_file), 'data/~w', ['space_invaders.mp4']),
@@ -12,11 +13,15 @@ test_video_source(IDX,BLUR,RESIZE):-
     release_video(Vid_add),
     diff_seq(Img_seq_add, Diff_seq_add),
     release_imgseq(Img_seq_add),    
-    resize_seq(Diff_seq_add,RESIZE,Blur_seq_add),    
-    release_imgseq(Diff_seq_add),    
+    resize_seq(Diff_seq_add,BLUR,RESIZE,Blur_seq_add),
+%    resize_seq(Diff_seq_add,BLUR,RESIZE,Resized_seq_add),        
+%    release_imgseq_pointer(Diff_seq_add),    
 %    blur_seq(Resized_seq_add,BLUR,Blur_seq_add),
-    gradient_seq(Blur_seq_add, Mag_seq_add, Dir_seq_add),
     seq_img_ptr(Blur_seq_add,IDX,Img_add),
+%    show_gradient_image(Img_add),
+    gradient_seq(Blur_seq_add, Mag_seq_add, Dir_seq_add),
+
+    
 
     %% SAMPLE POINTS PER FRAME
     RESIZE2 is RESIZE - 1,
@@ -28,9 +33,7 @@ test_video_source(IDX,BLUR,RESIZE):-
     %% FIT LINE 
     
     find_line([RESIZE2,RESIZE2],IDX,Mag_seq_add,Dir_seq_add,Line),
-    writeln(Line),
     [P1,P2] = Line,
-    %% EXEND LINE
     
     %% FIND RECTANGLE
 %    find_square([RESIZE2,RESIZE2],IDX,Mag_seq_add,Dir_seq_add,Square),
@@ -54,14 +57,13 @@ test_video_source(IDX,BLUR,RESIZE):-
 %%    line(P4,P1,Mag_seq_add,Dir_seq_add), %~2/3 success
     draw_points_2d(Img_add, [P1], green),        
     draw_points_2d(Img_add, [P2], red),
+    draw_line_seg_2d(Img_add, P1,P2, yellow),
 %    draw_points_2d(Img_add, Line, yellow),
 %    draw_points_2d(Img_add, Square, green),
 
     showimg_win(Img_add,debug),
 %    showimg_win(Img_add,debug),
-    release_imgseq_grad(Blur_seq_add),
-    release_imgseq_grad(Mag_seq_add),
-    release_imgseq_grad(Dir_seq_add).
+    release_imgseq_pointer(Blur_seq_add).
 
 find_line(Bounds,Z,Mag_seq_add,Dir_seq_add,Line):-
     writeln("Entering find_line"),
@@ -118,6 +120,9 @@ corner(C,C1,C2,Mag_add,Dir_add):-
     line(C,C1,Mag_add,Dir_add),
     line(C,C2,Mag_add,Dir_add).    
 
+%line(Start,End,Mag_add,Dir_add):-
+%    line(Start,End).
+
 line(Start,End,Mag_add,Dir_add):-
     Start \= End,
     mindist(MinDist),
@@ -138,7 +143,7 @@ line(Start,End,Mag_add,Dir_add):-
     distance(Start,End,Dist),
     mindist(MinDist),
     Dist >= MinDist,
-    noisy_line(Start,End,Mag_add,Dir_add).
+    noisy_line(Start,End,Mag_add,Dir_add,5).
     
 line_extend(Start,End,Bounds,Mag_add,Dir_add,NewStart,NewEnd):-
     line_extend_e(Start,End,Bounds,Mag_add,Dir_add,NewEnd),

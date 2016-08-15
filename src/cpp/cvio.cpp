@@ -226,7 +226,7 @@ PREDICATE(release_imgseq, 1) {
 /* release_imgseq(ADD)
  * release an image sequence in stack
  */
-PREDICATE(release_imgseq_grad, 1) {
+PREDICATE(release_imgseq_pointer, 1) {
     term_t t1 = A1.ref;
     char *p1;
     if (PL_get_atom_chars(t1, &p1)) {
@@ -251,7 +251,8 @@ PREDICATE(showimg_win, 2) {
         Mat* img = str2ptr<Mat>(p1);
         if (PL_get_atom_chars(t2, &p2)) {
             string window_name(p2);
-            namedWindow(window_name, WINDOW_AUTOSIZE);
+//            namedWindow(window_name, WINDOW_AUTOSIZE);
+            namedWindow(window_name, WINDOW_NORMAL);
             Mat frame = img->clone();
             cvtColor(frame, frame, COLOR_Lab2BGR);
             imshow(window_name, frame);

@@ -85,8 +85,7 @@ double vec_len(const vector<int> v){
     return sqrt(l);
 }
 
-bool noisy_line(const vector<int> start, const vector<int> end, const Mat *mag, const Mat *dir){
-    
+bool noisy_line(const vector<int> start, const vector<int> end, const Mat *mag, const Mat *dir, double grad_threshold){
 //    cout << start[0] << ","<< start[1] << ", "<< start[2] << ": " << end[0] << ", "<< end[1] << ", "<< end[2] << endl;
     vector<int> diff = vec_subtract(end, start);
     double len = vec_len(diff);
@@ -129,7 +128,7 @@ bool noisy_line(const vector<int> start, const vector<int> end, const Mat *mag, 
         vector<double> t_mag_dir = get_mag_dir(loc, mag, dir);
         
 //        cout << "new sample @" << loc[0] << "," << loc[1] << "," << loc[2] << ", vals:" << t_mag_dir[0] << "," << t_mag_dir[1] << " vs "  << start_mag_dir[0] << "," << start_mag_dir[1] << endl;
-        if(!similar_grad(start_mag_dir, t_mag_dir, THRESHOLD)){
+        if(!similar_grad(start_mag_dir, t_mag_dir, grad_threshold)){
 //            cout << "FAILED!" << endl;
             return false;
         }

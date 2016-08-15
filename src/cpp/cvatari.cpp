@@ -80,6 +80,75 @@ PREDICATE(gradient_image, 3) {
     return TRUE;
 }
 
+/* gradient_image(+IMGADD, -Magnitude, -Direction)
+ * get gradient of local area of point [X, Y, Z] in image sequence IMGSEQ
+ */
+PREDICATE(show_gradient_image, 1) {
+    char *p1 = (char*) A1;
+    const string add_img(p1);
+    Mat *src = str2ptr<Mat>(add_img);
+    
+    Mat src_gray;
+    Mat grad;
+    char* window_name = "Sobel Demo - Simple Edge Detector";
+    int scale = 1;
+    int delta = 0;
+    int ddepth = CV_16S;
+
+    /// Load an image
+//    GaussianBlur( *src, *src, Size(3,3), 0, 0, BORDER_DEFAULT );
+
+    /// Convert it to gray
+    cvtColor( *src, src_gray, CV_BGR2GRAY );
+
+    /// Create window
+    namedWindow( window_name, WINDOW_NORMAL );
+
+    /// Generate grad_x and grad_y
+    Mat grad_x, grad_y;
+    Mat abs_grad_x, abs_grad_y;
+
+    /// Gradient X
+    //Scharr( src_gray, grad_x, ddepth, 1, 0, scale, delta, BORDER_DEFAULT );
+    Sobel( src_gray, grad_x, ddepth, 1, 0, 3, scale, delta, BORDER_DEFAULT );
+    convertScaleAbs( grad_x, abs_grad_x );
+
+    /// Gradient Y
+    //Scharr( src_gray, grad_y, ddepth, 0, 1, scale, delta, BORDER_DEFAULT );
+    Sobel( src_gray, grad_y, ddepth, 0, 1, 3, scale, delta, BORDER_DEFAULT );
+    convertScaleAbs( grad_y, abs_grad_y );
+
+    /// Total Gradient (approximate)
+    double alpha = 10.0;
+    int beta = -5;
+    addWeighted( abs_grad_x, 0.5, abs_grad_y, 0.5, 0, grad );
+
+//    Mat grad_bright = Mat::zeros( grad.size(), grad.type() );
+
+    for(int i = 0; i < 10; i++){    
+        grad.convertTo(grad, -1, alpha, beta);
+        grad.convertTo(grad, -1, 1/alpha, 0);
+        GaussianBlur(grad, grad, Size(3,3), 0, 0, BORDER_DEFAULT);
+    }
+    
+    grad.convertTo(grad, -1, alpha, beta);
+    
+    
+//    for(int i = 0; i < 10; i++){    
+//        GaussianBlur(src_gray, src_gray, Size(3,3), 0, 0, BORDER_DEFAULT);
+//    }
+    
+    
+    
+//    imshow( window_name, grad );
+    imshow( window_name, src_gray );        
+    waitKey(0); 
+    destroyWindow(window_name);
+    
+    return TRUE;
+}
+
+
 
 /* blur_image(+IMG_SEQ_ADD, +STEP_SIZE, -BLURRED_IMAGE)
  * Applies guassian blurring to an image sequence
@@ -178,24 +247,29 @@ PREDICATE(resize_image, 4) {
 }
 
 
-/* resize_image(+IMG_SEQ_ADD, +STEP_SIZE, -BLURRED_IMAGE)
+/* resize_image(+IMG_SEQ_ADD, +BLUR_SIZE, +STEP_SIZE, -BLURRED_IMAGE)
  * Resizes images in an image sequence
  */
-PREDICATE(resize_seq, 3) {
+PREDICATE(resize_seq, 4) {
     char *p1 = (char*) A1;
     const string add_seq(p1);
     vector<Mat> *seq = str2ptr<vector<Mat>>(add_seq);
     vector<Mat*> *resized_seq = new vector<Mat*>();
     
-    int step_size = (int) A2;
+    int blur_size = (int) A2;
+    int step_size = (int) A3;
     
     int ddepth = CV_64F;
 
     for(vector<Mat>::iterator src = seq->begin(); src != seq->end(); src++){    
+        Mat *blurred = new Mat(src->clone());
         Mat *dst = new Mat(step_size, step_size, ddepth);
-
-        resize(*src, *dst, dst->size(), 0, 0, CV_INTER_AREA);
         
+//        cout << "BLURRING..." << flush;
+        blur_image(&(*src), blur_size, blurred);
+//        cout << " done \nRESIZING..." << flush;
+        resize(*blurred, *dst, dst->size(), 0, 0, CV_INTER_AREA);
+//        cout << " done" << endl;
 //        cout << "src: " << src->rows << ", " << src->cols;
 //        cout << ", mat: " << blurred->rows << ", " << blurred->cols << endl;
         
@@ -203,7 +277,7 @@ PREDICATE(resize_seq, 3) {
     }
 
     string add_resized = ptr2str(resized_seq);
-    A3 = PlTerm(add_resized.c_str());
+    A4 = PlTerm(add_resized.c_str());
 
 //    cout << "BLURRING DONE" << endl;
     
@@ -280,12 +354,12 @@ PREDICATE(sample_point_image, 4) {
 }
 
 
-/* noisy_line(+START, +END, +IMGSEQ, +DIRSEQ)
+/* noisy_line(+START, +END, +IMGSEQ, +DIRSEQ,+THRESHOLD)
  * Samples points and checks if they're correct with a set probabilty   
  * @POINTS = [[X, Y]]: a list of points of interest
  * @RECTANGLE = the rectangle that closes the set of points
  */
-PREDICATE(noisy_line, 4){
+PREDICATE(noisy_line, 5){
     vector<int> start = list2vec<int>(A1, 3);
     vector<int> end = list2vec<int>(A2, 3);
     
@@ -303,7 +377,9 @@ PREDICATE(noisy_line, 4){
     vector<Mat*> *dir_seq = str2ptr<vector<Mat*>>(dir_seq_add);
     Mat *dir = dir_seq->at(start[2]);    
 
-    if(noisy_line(start, end, mag, dir)){
+    double threshold = (double) A5;
+
+    if(noisy_line(start, end, mag, dir, threshold)){
         return TRUE;
     }else{
         return FALSE;
@@ -311,9 +387,9 @@ PREDICATE(noisy_line, 4){
 }
 
 
-/* noisy_line_image(+START, +END, +MAG, +DIR)
+/* noisy_line_image(+START, +END, +MAG, +DIR, +THRESHOLD)
  */
-PREDICATE(noisy_line_image, 4){
+PREDICATE(noisy_line_image, 5){
     vector<int> start = list2vec<int>(A1, 3);
     vector<int> end = list2vec<int>(A2, 3);
     
@@ -325,7 +401,9 @@ PREDICATE(noisy_line_image, 4){
     const string dir_add(p2); 
     Mat *dir = str2ptr<Mat>(dir_add);
     
-    if(noisy_line(start, end, mag, dir)){
+    double threshold = (double) A5;
+    
+    if(noisy_line(start, end, mag, dir, threshold)){
         return TRUE;
     }else{
         return FALSE;
