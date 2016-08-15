@@ -29,41 +29,40 @@ test_video_source(IDX,BLUR,RESIZE):-
 %    random_line_sample([RESIZE2,RESIZE2],IDX,Mag_seq_add,Dir_seq_add,P2),
 %    random_line_sample([RESIZE2,RESIZE2],IDX,Mag_seq_add,Dir_seq_add,P3),
 %    random_line_sample([RESIZE2,RESIZE2],IDX,Mag_seq_add,Dir_seq_add,P4),
+    
+%    find_line([RESIZE2,RESIZE2],IDX,Mag_seq_add,Dir_seq_add,Line),
+%    [P1,P2] = Line,
+%    draw_line_seg_2d(Img_add, P1,P2, yellow),
 
-    %% FIT LINE 
-    
-    find_line([RESIZE2,RESIZE2],IDX,Mag_seq_add,Dir_seq_add,Line),
-    [P1,P2] = Line,
-    
+%    find_line([RESIZE2,RESIZE2],IDX,Mag_seq_add,Dir_seq_add,Line2),
+%    [Q1,Q2] = Line2,
+%    draw_line_seg_2d(Img_add, Q1,Q2, green),
+
     %% FIND RECTANGLE
+    find_n_line_samples(30,[RESIZE2,RESIZE2],IDX,Mag_seq_add,Dir_seq_add,Points),
+    writeln(Points),
 %    find_square([RESIZE2,RESIZE2],IDX,Mag_seq_add,Dir_seq_add,Square),
     
     %% ADD CENTER TO BACKGROUND KNOWLEDGE
     
     %% FIND RULES TO FIT MOTION PATH OF RECTANGLE CENTER
-
-%    P1 = [18,19,IDX], 
-%    P2 = [88,19,IDX],
-%    P3 = [88,81,IDX],
-%    P4 = [18,81,IDX],
-%    Pts = [P1,P2,P3,P4],
-%    
-%    PQ2 = [44,19,IDX],
-%    
-%%    line_extend(P1,PQ2,Mag_seq_add,Dir_seq_add,Q1,Q2),
-%%    line(P1,P2,Mag_seq_add,Dir_seq_add), %~2/3 success
-%%    line(P2,P3,Mag_seq_add,Dir_seq_add), %~1/3 success
-%%    line(P3,P4,Mag_seq_add,Dir_seq_add), %~2/3 success
-%%    line(P4,P1,Mag_seq_add,Dir_seq_add), %~2/3 success
-    draw_points_2d(Img_add, [P1], green),        
-    draw_points_2d(Img_add, [P2], red),
-    draw_line_seg_2d(Img_add, P1,P2, yellow),
-%    draw_points_2d(Img_add, Line, yellow),
-%    draw_points_2d(Img_add, Square, green),
-
+    draw_points_2d(Img_add,Points,red),
+    
     showimg_win(Img_add,debug),
 %    showimg_win(Img_add,debug),
     release_imgseq_pointer(Blur_seq_add).
+
+
+find_n_line_samples(0,_,_,_,_,[]):-writeln("AT Zero").
+find_n_line_samples(N,Bounds,Z,Mag_seq_add,Dir_seq_add,Samples):-
+    print("N is: "),print(N),nl,
+    (random_line_sample(Bounds,Z,Mag_seq_add,Dir_seq_add,P1) ->    
+        N2 is N - 1,
+        find_n_line_samples(N2,Bounds,Z,Mag_seq_add,Dir_seq_add,S),
+        append([P1],S,Samples); 
+        find_n_line_samples(N,Bounds,Z,Mag_seq_add,Dir_seq_add,Samples)).
+    
+        
 
 find_line(Bounds,Z,Mag_seq_add,Dir_seq_add,Line):-
     writeln("Entering find_line"),
