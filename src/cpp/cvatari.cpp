@@ -6,11 +6,13 @@
 #include "lv_utils.cpp"
 
 #include <opencv2/core/core.hpp>
-#include "opencv2/imgproc/imgproc.hpp"
+#include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <SWI-cpp.h>
 #include <SWI-Prolog.h>
 
+#include <stdlib.h>
+#include <stdio.h>
 #include <iostream>
 
 #include <algorithm> 
@@ -435,6 +437,56 @@ PREDICATE(similar_grad, 5){
         return FALSE;
     }   
 }
+
+/* find_rectangle(+SRC, +POINTS, -RECTANGLE)
+ */
+PREDICATE(find_rectangle, 3){
+    char *p1 = (char*) A1;
+    const string add_img(p1);
+    Mat *src = str2ptr<Mat>(add_img);
+
+    vector<Scalar> pts = point_list2vec(A2);
+
+    vector<Point> cv_pts;
+
+    for(unsigned int i = 0; i < pts.size(); i++){
+        Scalar s = pts.at(i);
+        Point pt(s[0],s[1]);
+        
+        cv_pts.push_back(pt);
+    }
+    
+    cout << "Pts processed" << endl;
+    
+    RotatedRect rect = minAreaRect(cv_pts);
+    
+    cout << "Rec fitted" << endl;
+    
+    Point2f rect_points[4]; 
+    rect.points( rect_points );
+
+    Mat drawing = src->clone();
+    RNG rng(12345);
+    Scalar color = Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
+
+    for(int i = 0; i < 4; i++ ){
+          line( drawing, rect_points[i], rect_points[(i+1)%4], color, 1, 8 );
+    }
+    
+    for(unsigned int i = 0; i < pts.size(); i++){      
+        circle(drawing, cv_pts[i],1,CV_RGB(255,0,0),3);
+    }
+    
+
+    cout << "Drawing processed" << endl;
+
+    /// Show in a window
+    namedWindow( "Contours", WINDOW_NORMAL );
+    imshow( "Contours", drawing );
+
+    return TRUE;
+}
+
 
 
 

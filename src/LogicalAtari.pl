@@ -25,6 +25,8 @@ test_video_source(IDX,BLUR,RESIZE,THRESHOLD):-
     RESIZE2 is RESIZE - 1,
     find_n_point_samples(30,[RESIZE2,RESIZE2],IDX,THRESHOLD,Mag_seq_add,Dir_seq_add,Points),
     writeln(Points),
+    random_subset(10, Points, Output),
+    find_rectangle(Img_add,Output,R),
             
 %    find_line([RESIZE2,RESIZE2],IDX,5,Mag_seq_add,Dir_seq_add,Line),
 %    [P1,P2] = Line,
@@ -239,6 +241,11 @@ subsetZ([X|L],[X|S]) :-
     subsetZ(L,S).
 subsetZ(L, [_|S]) :-
     subsetZ(L,S).
+
+random_subset(N, Source, Output) :-
+  random_permutation(Source, Scrambled),
+  append(Output, _, Scrambled),
+  length(Output, N).
 
 random_radian(Radian):-
     % Returns a number in (0, 2*pi)
