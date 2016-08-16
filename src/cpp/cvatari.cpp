@@ -410,6 +410,32 @@ PREDICATE(noisy_line_image, 5){
     }   
 }
 
+/* similar_grad(+POINT1, +POINT2, +MAG, +DIR, +THRESHOLD)
+ */
+PREDICATE(similar_grad, 5){
+    vector<int> point1 = list2vec<int>(A1, 3);
+    vector<int> point2 = list2vec<int>(A2, 3);
+    
+    char *p1 = (char*) A3;
+    const string mag_add(p1); 
+    Mat *mag = str2ptr<Mat>(mag_add);
+
+    char *p2 = (char*) A4;
+    const string dir_add(p2); 
+    Mat *dir = str2ptr<Mat>(dir_add);
+    
+    double threshold = (double) A5;
+
+    vector<double> p1_mag_dir = get_mag_dir(point1, mag, dir);
+    vector<double> p2_mag_dir = get_mag_dir(point2, mag, dir);
+    
+    if(similar_grad(p1_mag_dir, p2_mag_dir, threshold)){
+        return TRUE;
+    }else{
+        return FALSE;
+    }   
+}
+
 
 
 

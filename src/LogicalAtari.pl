@@ -6,7 +6,7 @@
 mindist(2).
 line([0,0,0],[0,0,0]).
 
-test_video_source(IDX,BLUR,RESIZE):-
+test_video_source(IDX,BLUR,RESIZE,THRESHOLD):-
     format(atom(Vid_file), 'data/~w', ['space_invaders.mp4']),
     load_video(Vid_file, Vid_add),    
     video2imgseq(Vid_add, Img_seq_add),
@@ -21,26 +21,22 @@ test_video_source(IDX,BLUR,RESIZE):-
 %    show_gradient_image(Img_add),
     gradient_seq(Blur_seq_add, Mag_seq_add, Dir_seq_add),
 
-    
-
     %% SAMPLE POINTS PER FRAME
     RESIZE2 is RESIZE - 1,
-%    random_line_sample([RESIZE2,RESIZE2],IDX,Mag_seq_add,Dir_seq_add,P1),
-%    random_line_sample([RESIZE2,RESIZE2],IDX,Mag_seq_add,Dir_seq_add,P2),
-%    random_line_sample([RESIZE2,RESIZE2],IDX,Mag_seq_add,Dir_seq_add,P3),
-%    random_line_sample([RESIZE2,RESIZE2],IDX,Mag_seq_add,Dir_seq_add,P4),
-    
-%    find_line([RESIZE2,RESIZE2],IDX,Mag_seq_add,Dir_seq_add,Line),
+    find_n_point_samples(30,[RESIZE2,RESIZE2],IDX,THRESHOLD,Mag_seq_add,Dir_seq_add,Points),
+    writeln(Points),
+            
+%    find_line([RESIZE2,RESIZE2],IDX,5,Mag_seq_add,Dir_seq_add,Line),
 %    [P1,P2] = Line,
 %    draw_line_seg_2d(Img_add, P1,P2, yellow),
 
-%    find_line([RESIZE2,RESIZE2],IDX,Mag_seq_add,Dir_seq_add,Line2),
+%    find_line([RESIZE2,RESIZE2],IDX,5,Mag_seq_add,Dir_seq_add,Line2),
 %    [Q1,Q2] = Line2,
 %    draw_line_seg_2d(Img_add, Q1,Q2, green),
 
     %% FIND RECTANGLE
-    find_n_line_samples(30,[RESIZE2,RESIZE2],IDX,Mag_seq_add,Dir_seq_add,Points),
-    writeln(Points),
+
+
 %    find_square([RESIZE2,RESIZE2],IDX,Mag_seq_add,Dir_seq_add,Square),
     
     %% ADD CENTER TO BACKGROUND KNOWLEDGE
@@ -51,18 +47,6 @@ test_video_source(IDX,BLUR,RESIZE):-
     showimg_win(Img_add,debug),
 %    showimg_win(Img_add,debug),
     release_imgseq_pointer(Blur_seq_add).
-
-
-find_n_line_samples(0,_,_,_,_,[]):-writeln("AT Zero").
-find_n_line_samples(N,Bounds,Z,Mag_seq_add,Dir_seq_add,Samples):-
-    print("N is: "),print(N),nl,
-    (random_line_sample(Bounds,Z,Mag_seq_add,Dir_seq_add,P1) ->    
-        N2 is N - 1,
-        find_n_line_samples(N2,Bounds,Z,Mag_seq_add,Dir_seq_add,S),
-        append([P1],S,Samples); 
-        find_n_line_samples(N,Bounds,Z,Mag_seq_add,Dir_seq_add,Samples)).
-    
-        
 
 find_line(Bounds,Z,Mag_seq_add,Dir_seq_add,Line):-
     writeln("Entering find_line"),
@@ -271,6 +255,14 @@ calc_coords_2d(L,A,[X,Y]):-
     X is integer(L * sin(A)),
     Y is integer(L * cos(A)).
 
+add_coords_2d([X,Y],Dir,[Nx,Ny]):-
+    mindist(L),
+    calc_coords_2d(L,Dir,[Dx,Dy]),
+    not((Dx = 0, Dy = 0)),
+    Nx is X + Dx,
+    Ny is Y + Dy.
+
+
 
 random_point([X,Y,Z],Len,Dest):-
     % Random point without enforcing bounds
@@ -333,35 +325,46 @@ random_edge_point([MaxX, MaxY], Dir, [X,Y]):-
         Y is 0,
         random(0, MaxX,X)).
 
-random_line_sample(Bounds,Z,Mag_add,Dir_add,Point):-
+find_n_point_samples(0,_,_,_,_,_,[]):-writeln("AT Zero").
+find_n_point_samples(N,Bounds,Z,Threshold,Mag_seq_add,Dir_seq_add,Samples):-
+    print("N is: "),print(N),nl,
+    (random_line_sample(Bounds,Z,Threshold,Mag_seq_add,Dir_seq_add,P1) ->    
+        N2 is N - 1,
+        find_n_point_samples(N2,Bounds,Z,Threshold,Mag_seq_add,Dir_seq_add,S),
+        append([P1],S,Samples); 
+        find_n_point_samples(N,Bounds,Z,Threshold,Mag_seq_add,Dir_seq_add,Samples)).
+
+random_line_sample(Bounds,Z,Threshold,Mag_add,Dir_add,Point):-
     random_radian(Dir),
     random_edge_point(Bounds,Dir,[X,Y]),
     Start = [X,Y,Z],
-    random_line_sample_ex(Bounds,Start,Dir,Mag_add,Dir_add,P),
+    random_line_sample_ex(Bounds,Start,Threshold,Dir,Mag_add,Dir_add,P),
     (Start = P -> 
-        random_line_sample_ex(Bounds,Start,Dir,Mag_add,Dir_add,Point);
-        P = Point),
+        random_line_sample_ex(Bounds,Start,Threshold,Dir,Mag_add,Dir_add,Point);
+        P = Point),!,
     not(point_on_edge(Point,Bounds)).
          
     
-random_line_sample_ex([MaxX,MaxY],[Sx,Sy,Z],Dir,Mag_add,Dir_add,Point):-
-    sample_point([Sx,Sy,Z],Mag_add,Dir_add,[Mag,_]),
-    AMag is abs(Mag),
-    AMag =< 0,
-    mindist(L),
-    calc_coords_2d(L,Dir,[Dx,Dy]),
-    Nx is Sx + Dx, between(0, MaxX, Nx),
-    Ny is Sy + Dy, between(0, MaxY, Ny),
-    not((Nx == Sx, Ny == Sy)),
+random_line_sample_ex([MaxX,MaxY],[X,Y,Z],Threshold,Dir,Mag_add,Dir_add,Point):-
+    point_above_threshold([X,Y,Z],Threshold,Mag_add,Dir_add),
+    add_coords_2d([X,Y],Dir,[Nx,Ny]),
     P = [Nx,Ny,Z],
-    random_line_sample_ex([MaxX,MaxY],P,Dir,Mag_add,Dir_add,Point).
+    random_line_sample_ex([MaxX,MaxY],P,Threshold,Dir,Mag_add,Dir_add,Point).
     
-random_line_sample_ex(_,Point,_,_,_,Point).
+random_line_sample_ex(_,Point,_,_,_,_,Point).
+
+point_above_threshold([X,Y,Z],Threshold,Mag_add,Dir_add):-
+    sample_point([X,Y,Z],Mag_add,Dir_add,[Mag,_]),
+    AMag is abs(Mag),
+    AMag =< Threshold.
+
 
 point_on_edge([X,Y,_],[MaxX,MaxY]):-
     (X =< 0; X >= MaxX; Y =< 0; Y >= MaxY).
     
 point_within_bounds([X,Y,_],[MaxX,MaxY]):-
     X >= 0, X =< MaxX, Y >= 0, Y =< MaxY.
+    
+ 
     
     
