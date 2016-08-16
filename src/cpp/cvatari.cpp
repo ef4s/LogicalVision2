@@ -489,5 +489,56 @@ PREDICATE(find_rectangle, 3){
 
 
 
+/* k_means_clusters(+SRC, +POINTS, -CLUSTERS)
+ */
+PREDICATE(k_means_clusters, 3){
+    char *p1 = (char*) A1;
+    const string add_img(p1);
+    Mat *src = str2ptr<Mat>(add_img);
+
+    vector<Scalar> pts = point_list2vec(A2);
+
+    Mat points(sampleCount, 1, CV_32FC2),labels,centers;
+
+    for(unsigned int i = 0; i < pts.size(); i++){
+        Scalar s = pts.at(i);
+        Point pt(s[0],s[1]);
+        
+        cv_pts.push_back(pt);
+    }
+    
+    cout << "Pts processed" << endl;
+    
+    int clusterCount = 3;
+    
+    kmeans(cv_pts, clusterCount, labels,
+        TermCriteria(TermCriteria::COUNT + TermCriteria::EPS, 10, 1.0),
+           10, KMEANS_PP_CENTERS, centers);
+
+    
+    cout << "K-Means fitted" << endl;
+    
+    Mat drawing = src->clone();
+
+    for(unsigned int i = 0; i < pts.size(); i++){      
+        circle(drawing, cv_pts[i],1,CV_RGB(255,0,0),3);
+    }
+    
+    for(unsigned int i = 0; i < centers.size(); i++){      
+        circle(drawing, centers[i],1,CV_RGB(0,255,0),3);
+    }
+    
+
+    cout << "Drawing processed" << endl;
+
+    /// Show in a window
+    namedWindow( "Contours", WINDOW_NORMAL );
+    imshow( "Contours", drawing );
+
+    return TRUE;
+}
+
+
+
 
 

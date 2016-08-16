@@ -23,10 +23,11 @@ test_video_source(IDX,BLUR,RESIZE,THRESHOLD):-
 
     %% SAMPLE POINTS PER FRAME
     RESIZE2 is RESIZE - 1,
-    find_n_point_samples(30,[RESIZE2,RESIZE2],IDX,THRESHOLD,Mag_seq_add,Dir_seq_add,Points),
+    find_n_point_samples(40,[RESIZE2,RESIZE2],IDX,THRESHOLD,Mag_seq_add,Dir_seq_add,Points),
     writeln(Points),
     random_subset(10, Points, Output),
-    find_rectangle(Img_add,Output,R),
+%    find_rectangle(Img_add,Output,R),
+    k_means_clusters(Img_add,Points,R),   
             
 %    find_line([RESIZE2,RESIZE2],IDX,5,Mag_seq_add,Dir_seq_add,Line),
 %    [P1,P2] = Line,
