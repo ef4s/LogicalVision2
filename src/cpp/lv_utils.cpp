@@ -7,6 +7,7 @@
 #include <opencv2/core/core.hpp>
 #include "opencv2/imgproc/imgproc.hpp"
 #include <opencv2/highgui/highgui.hpp>
+#include "opencv2/shape/shape_distance.hpp"
 
 #include <iostream>
 
@@ -157,4 +158,114 @@ void gradient_image(Mat *src, Mat *mag, Mat *dir){
 
 void blur_image(Mat *src, int step_size, Mat *blurred){
     GaussianBlur(*src, *blurred, Size(step_size,step_size), 0, 0, BORDER_DEFAULT);
+}
+
+double sq_euclidian_distance(Point p1, Point p2){
+    return pow(p1.x - p2.x, 2) + pow(p1.y - p2.y, 2);    
+}
+
+double euclidian_distance(Point p1, Point p2){
+    return norm(p1 - p2);
+//    return sqrt(sq_euclidian_distance(p1, p2));
+}
+
+vector<Point2f> links_to_points(vector<Point2f> points, vector<int> links){
+    vector<Point2f> p;
+    for(int l : links){
+        p.push_back(points[l]);
+    }
+ 
+    return p;
+}
+
+Point2f mean_links(vector<Point2f> points, vector<int> links){
+    
+    vector<Point2f> pts = links_to_points(points, links);
+    vector<Point2f> m1;
+
+    reduce(pts, m1, 1, CV_REDUCE_AVG);
+
+    return m1[0];
+}
+
+
+vector<vector<double>> calc_distances(vector<Point2f> points, vector<vector<int>> links){
+    vector<vector<double>> distances;
+    for(int i = 1; i < ((int)links.size()); i++){
+//            Point2f p1 = mean_links(points, links[i]);
+        vector<Point2f> hi;
+        convexHull(links_to_points(points, links[i]), hi);
+        
+        for(int j = 0; j < i; j++){
+            //fit convex hull
+            double min = abs(pointPolygonTest(hi, points[links[j][0]], true));
+            
+            for(int k = 1; k < ((int)links[j].size()); k++){
+                double dist = abs(pointPolygonTest(hi, points[links[j][k]], true));
+                if(dist < min){
+                    min = dist;
+                }
+            }
+            
+            vector<double> t = {min, (double)i, (double)j};
+        
+//            Calculate the distance from the means
+//            Point2f p2 = mean_links(points, links[j]);
+//            vector<double> t = {sq_euclidian_distance(p1, p2), (double)i, (double)j};
+
+            distances.push_back(t);
+        }
+    }
+    
+    sort(distances.begin(), distances.end(), [](const vector<double>& a, const vector<double>& b) {return a[0] < b[0];});
+    
+    return distances;  
+}
+
+
+
+vector<int> single_link_cluster(vector<Point2f> points, int n_clusters){
+    int n_points = points.size();
+
+    assert(n_points > n_clusters);
+  
+    vector<vector<int>> links;
+    for(int i = 0; i < n_points; i++){
+        //each element is linked to itself
+        vector<int> l = {i};
+        links.push_back(l);
+    }
+    
+    while(((int)links.size()) > n_clusters){
+        //calc distances
+        vector<vector<double>> distances = calc_distances(points,links);
+    
+        //find lowest element pair
+        int p1 = distances[0][1];
+        int p2 = distances[0][2];
+        
+        //add the link to the list of links
+        vector<int> p1_links = links[p1];
+        vector<int> p2_links = links[p2];
+                
+        vector<int> merged_links;
+        merged_links.reserve(p1_links.size() + p2_links.size()); 
+        merged_links.insert(merged_links.end(), p1_links.begin(), p1_links.end() );
+        merged_links.insert(merged_links.end(), p2_links.begin(), p2_links.end() );
+
+        links.erase(links.begin() + p1);
+        links.erase(links.begin() + p2);
+        links.push_back(merged_links);
+    }
+    
+    vector<int> clusters;
+    clusters.resize(n_points);
+    
+    for(int cluster = 0; cluster < ((int)links.size()); cluster++){
+        for(int p : links[cluster]){
+            clusters[p] = cluster;                    
+        }
+    }
+    
+    return clusters;
 }

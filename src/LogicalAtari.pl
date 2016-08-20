@@ -23,11 +23,15 @@ test_video_source(IDX,BLUR,RESIZE,THRESHOLD):-
 
     %% SAMPLE POINTS PER FRAME
     RESIZE2 is RESIZE - 1,
-    find_n_point_samples(40,[RESIZE2,RESIZE2],IDX,THRESHOLD,Mag_seq_add,Dir_seq_add,Points),
-    writeln(Points),
-    random_subset(10, Points, Output),
+    find_n_point_samples(100,[RESIZE2,RESIZE2],IDX,THRESHOLD,Mag_seq_add,Dir_seq_add,Points),
+%    writeln(Points),
+    random_subset(3, Points, Output),
 %    find_rectangle(Img_add,Output,R),
-    k_means_clusters(Img_add,Points,R),   
+%    k_means_clusters(Img_add,Points,R), 
+    
+    NClusters = 3,
+    
+    single_link_clusters(Img_add,Points,NClusters,C), 
             
 %    find_line([RESIZE2,RESIZE2],IDX,5,Mag_seq_add,Dir_seq_add,Line),
 %    [P1,P2] = Line,
@@ -333,9 +337,9 @@ random_edge_point([MaxX, MaxY], Dir, [X,Y]):-
         Y is 0,
         random(0, MaxX,X)).
 
-find_n_point_samples(0,_,_,_,_,_,[]):-writeln("AT Zero").
+find_n_point_samples(0,_,_,_,_,_,[]).
 find_n_point_samples(N,Bounds,Z,Threshold,Mag_seq_add,Dir_seq_add,Samples):-
-    print("N is: "),print(N),nl,
+%    print("N is: "),print(N),nl,
     (random_line_sample(Bounds,Z,Threshold,Mag_seq_add,Dir_seq_add,P1) ->    
         N2 is N - 1,
         find_n_point_samples(N2,Bounds,Z,Threshold,Mag_seq_add,Dir_seq_add,S),

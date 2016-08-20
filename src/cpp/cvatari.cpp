@@ -497,36 +497,62 @@ PREDICATE(k_means_clusters, 3){
     Mat *src = str2ptr<Mat>(add_img);
 
     vector<Scalar> pts = point_list2vec(A2);
+    int sampleCount = (int) pts.size();
+    int clusterCount = 3;
 
-    Mat points(sampleCount, 1, CV_32FC2),labels,centers;
+    vector<Point2f> points;
+    Mat labels;    
+    Mat centers;   
 
-    for(unsigned int i = 0; i < pts.size(); i++){
+
+    for(int i = 0; i < sampleCount; i++){
         Scalar s = pts.at(i);
-        Point pt(s[0],s[1]);
-        
-        cv_pts.push_back(pt);
+        Point2f pt((float)s[0],(float)s[1]);
+        points.push_back(pt);
     }
-    
+        
     cout << "Pts processed" << endl;
     
-    int clusterCount = 3;
+    int attempts = 10;
+    int trials = 1000;
+    double epsilon = 1/(double)trials;
     
-    kmeans(cv_pts, clusterCount, labels,
-        TermCriteria(TermCriteria::COUNT + TermCriteria::EPS, 10, 1.0),
-           10, KMEANS_PP_CENTERS, centers);
-
+    TermCriteria criteria(TermCriteria::COUNT + TermCriteria::EPS, trials, epsilon);
+    cout << "Criteria processed" << endl;
+    
+    kmeans(points, clusterCount, labels, criteria, attempts, KMEANS_PP_CENTERS, centers);
     
     cout << "K-Means fitted" << endl;
     
     Mat drawing = src->clone();
 
-    for(unsigned int i = 0; i < pts.size(); i++){      
-        circle(drawing, cv_pts[i],1,CV_RGB(255,0,0),3);
+    
+//    
+//    for(unsigned int i = 0; i < centers.size(); i++){      
+//        circle(drawing, centers[i],1,CV_RGB(0,255,0),3);
+//    }
+     Scalar colorTab[] =
+    {
+        Scalar(0, 0, 255),
+        Scalar(0,255,0),
+        Scalar(255,100,100),
+        Scalar(255,0,255),
+        Scalar(0,255,255)
+    };
+    
+    for(int i = 0; i < sampleCount; i++){    
+        int clusterIdx = labels.at<int>(i);
+        circle(drawing, points.at(i),1,colorTab[clusterIdx],3);
     }
     
-    for(unsigned int i = 0; i < centers.size(); i++){      
-        circle(drawing, centers[i],1,CV_RGB(0,255,0),3);
-    }
+    cout << "Points drawn" << endl;
+//    
+    
+//    for(int i = 0; i < sampleCount; i++ ){
+//        int clusterIdx = labels.at<int>(i);
+//        Point ipt = points.at<Point2f>(i);
+//        circle( drawing, ipt, 2, colorTab[clusterIdx], FILLED, LINE_AA );
+//    }
     
 
     cout << "Drawing processed" << endl;
@@ -534,11 +560,60 @@ PREDICATE(k_means_clusters, 3){
     /// Show in a window
     namedWindow( "Contours", WINDOW_NORMAL );
     imshow( "Contours", drawing );
+    waitKey(0);
+    destroyWindow("Contours");
 
     return TRUE;
 }
 
 
+/* single_link_clusters(+SRC, +POINTS, +NCLUSTERS, -CLUSTERS)
+ */
+PREDICATE(single_link_clusters, 4){
+    char *p1 = (char*) A1;
+    const string add_img(p1);
+    Mat *src = str2ptr<Mat>(add_img);
 
+    vector<Scalar> pts = point_list2vec(A2);
+    int sampleCount = (int) pts.size();
+    
+    int clusterCount = (int) A3;
+
+    vector<Point2f> points;
+    for(int i = 0; i < sampleCount; i++){
+        Scalar s = pts.at(i);
+        Point2f pt((float)s[0],(float)s[1]);
+        points.push_back(pt);
+    }
+        
+    cout << "Pts processed" << endl;
+    
+    vector<int> clusters = single_link_cluster(points, clusterCount);
+
+    cout << "Single Link fitted" << endl;
+    
+    Mat drawing = src->clone();
+     Scalar colorTab[] = {
+        Scalar(0, 0, 255),
+        Scalar(0,255,0),
+        Scalar(255,100,100),
+        Scalar(255,0,255),
+        Scalar(0,255,255)
+    };
+    
+    for(int i = 0; i < sampleCount; i++){    
+        circle(drawing, points[i],1,colorTab[clusters[i]],1);
+    }
+    
+    cout << "Points drawn" << endl;
+
+    /// Show in a window
+    namedWindow( "S-LINK", WINDOW_NORMAL );
+    imshow( "S-LINK", drawing );
+    waitKey(0);
+    destroyWindow("S-LINK");
+        
+    return TRUE;    
+}
 
 
