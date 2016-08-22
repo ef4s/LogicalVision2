@@ -20,6 +20,7 @@
 #include <string>
 #include <tgmath.h>
 #include <math.h>
+#include <limits>
 
 using namespace std;
 using namespace cv;
@@ -92,7 +93,7 @@ PREDICATE(show_gradient_image, 1) {
     
     Mat src_gray;
     Mat grad;
-    char* window_name = "Sobel Demo - Simple Edge Detector";
+    string window_name = "Sobel Demo - Simple Edge Detector";
     int scale = 1;
     int delta = 0;
     int ddepth = CV_16S;
@@ -593,7 +594,7 @@ PREDICATE(single_link_clusters, 4){
     cout << "Single Link fitted" << endl;
     
     Mat drawing = src->clone();
-     Scalar colorTab[] = {
+    Scalar colorTab[] = {
         Scalar(0, 0, 255),
         Scalar(0,255,0),
         Scalar(255,100,100),
@@ -614,6 +615,72 @@ PREDICATE(single_link_clusters, 4){
     destroyWindow("S-LINK");
         
     return TRUE;    
+}
+
+
+/* find_rectangle(+SRC, +POINTS, -RECTANGLE)
+ */
+PREDICATE(find_rectangles_from_src, 3){
+    char *p1 = (char*) A1;
+    const string add_img(p1);
+    Mat *src = str2ptr<Mat>(add_img);
+
+    vector<Scalar> pts = point_list2vec(A2);
+
+    vector<Point2f> points;
+    
+    int sample_size = pts.size();
+    
+    for(int i = 0; i < sample_size; i++){
+        Scalar s = pts.at(i);
+        Point2f pt(s[0],s[1]);
+        
+        points.push_back(pt);
+    }
+    
+    cout << "Pts processed, number of points: " << sample_size << endl;
+    vector<RotatedRect> best_rect;
+    vector<int> best_cluster_idx;
+    
+    best_fit_rectangle(points, best_rect, best_cluster_idx);
+
+    cout << "Rec fitted" << endl;
+    
+    Mat drawing = src->clone();
+    RNG rng(12345);
+    
+    //Plot rectangles
+    for(RotatedRect rect:best_rect){
+        Point2f rect_points[4]; 
+        rect.points( rect_points );
+        
+        Scalar color = Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
+        for(int i = 0; i < 4; i++ ){
+              line( drawing, rect_points[i], rect_points[(i+1)%4], color, 1, 8 );
+        }
+    }
+    
+    Scalar colorTab[] = {
+        Scalar(0, 0, 255),
+        Scalar(0,255,0),
+        Scalar(255,100,100),
+        Scalar(255,0,255),
+        Scalar(0,255,255)
+    };
+    
+    for(int i = 0; i < sample_size; i++){    
+        circle(drawing, points[i],1,colorTab[best_cluster_idx[i]],1);
+    }
+    
+    cout << "Points drawn" << endl;
+
+    /// Show in a window
+    namedWindow( "S-LINK", WINDOW_NORMAL );
+    imshow( "S-LINK", drawing );
+    waitKey(0);
+    destroyWindow("S-LINK");
+
+    return TRUE;
 }
 
 

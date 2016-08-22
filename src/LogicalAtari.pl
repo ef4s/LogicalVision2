@@ -6,7 +6,7 @@
 mindist(2).
 line([0,0,0],[0,0,0]).
 
-test_video_source(IDX,BLUR,RESIZE,THRESHOLD):-
+test_video_source(IDX,BLUR,RESIZE,THRESHOLD,NClusters):-
     format(atom(Vid_file), 'data/~w', ['space_invaders.mp4']),
     load_video(Vid_file, Vid_add),    
     video2imgseq(Vid_add, Img_seq_add),
@@ -25,13 +25,12 @@ test_video_source(IDX,BLUR,RESIZE,THRESHOLD):-
     RESIZE2 is RESIZE - 1,
     find_n_point_samples(100,[RESIZE2,RESIZE2],IDX,THRESHOLD,Mag_seq_add,Dir_seq_add,Points),
 %    writeln(Points),
-    random_subset(3, Points, Output),
+%    random_subset(3, Points, Output),
 %    find_rectangle(Img_add,Output,R),
 %    k_means_clusters(Img_add,Points,R), 
     
-    NClusters = 3,
-    
-    single_link_clusters(Img_add,Points,NClusters,C), 
+%    single_link_clusters(Img_add,Points,NClusters,C), 
+    find_rectangles_from_src(Img_add,Points,C),
             
 %    find_line([RESIZE2,RESIZE2],IDX,5,Mag_seq_add,Dir_seq_add,Line),
 %    [P1,P2] = Line,
@@ -377,6 +376,12 @@ point_on_edge([X,Y,_],[MaxX,MaxY]):-
 point_within_bounds([X,Y,_],[MaxX,MaxY]):-
     X >= 0, X =< MaxX, Y >= 0, Y =< MaxY.
     
- 
+list_min([L|Ls], Min) :-
+    list_min(Ls, L, Min).
+
+list_min([], Min, Min).
+list_min([L|Ls], Min0, Min) :-
+    Min1 is min(L, Min0),
+    list_min(Ls, Min1, Min).
     
     
