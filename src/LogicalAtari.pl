@@ -13,37 +13,24 @@ test_video_source(IDX,BLUR,RESIZE,THRESHOLD,NClusters):-
     release_video(Vid_add),
     diff_seq(Img_seq_add, Diff_seq_add),
     release_imgseq(Img_seq_add),    
-    resize_seq(Diff_seq_add,BLUR,RESIZE,Blur_seq_add),
-%    resize_seq(Diff_seq_add,BLUR,RESIZE,Resized_seq_add),        
-%    release_imgseq_pointer(Diff_seq_add),    
-%    blur_seq(Resized_seq_add,BLUR,Blur_seq_add),
-    seq_img_ptr(Blur_seq_add,IDX,Img_add),
-%    show_gradient_image(Img_add),
-    gradient_seq(Blur_seq_add, Mag_seq_add, Dir_seq_add),
+    
+    writeln("Made it here"),
+    imgseq_bounds(Diff_seq_add,[MaxX,MaxY,MaxZ]),
+    writeln([MaxX,MaxY,MaxZ]),
 
+    resize_seq(Diff_seq_add,BLUR,[MaxX,MaxY],Resized_seq_add),        
+    release_imgseq_pointer(Diff_seq_add),    
+    
+    seq_img_ptr(Resized_seq_add,IDX,Img_add),
+    writeln("Made it here"),
+%    show_gradient_image(Img_add),
+    gradient_seq(Resized_seq_add, Mag_seq_add, Dir_seq_add),
+    writeln("Made it here"),
+    
     %% SAMPLE POINTS PER FRAME
     RESIZE2 is RESIZE - 1,
-    find_n_point_samples(100,[RESIZE2,RESIZE2],IDX,THRESHOLD,Mag_seq_add,Dir_seq_add,Points),
-%    writeln(Points),
-%    random_subset(3, Points, Output),
-%    find_rectangle(Img_add,Output,R),
-%    k_means_clusters(Img_add,Points,R), 
-    
-%    single_link_clusters(Img_add,Points,NClusters,C), 
+    find_n_point_samples(100,[MaxX,MaxY],IDX,THRESHOLD,Mag_seq_add,Dir_seq_add,Points),
     find_rectangles_from_src(Img_add,Points,C),
-            
-%    find_line([RESIZE2,RESIZE2],IDX,5,Mag_seq_add,Dir_seq_add,Line),
-%    [P1,P2] = Line,
-%    draw_line_seg_2d(Img_add, P1,P2, yellow),
-
-%    find_line([RESIZE2,RESIZE2],IDX,5,Mag_seq_add,Dir_seq_add,Line2),
-%    [Q1,Q2] = Line2,
-%    draw_line_seg_2d(Img_add, Q1,Q2, green),
-
-    %% FIND RECTANGLE
-
-
-%    find_square([RESIZE2,RESIZE2],IDX,Mag_seq_add,Dir_seq_add,Square),
     
     %% ADD CENTER TO BACKGROUND KNOWLEDGE
     

@@ -273,23 +273,98 @@ double score_fit(vector<Point2f> points, RotatedRect rect){
     rect.points(t_rect_points);
     vector<Point2f> rect_points(begin(t_rect_points), end(t_rect_points));
 
+    double score = 0;
+
     for(Point2f point : points){
-        score += pow(pointPolygonTest(rect, point, true), 2);
+        score += pow(pointPolygonTest(rect_points, point, true), 2);
     }
     
     return score;
 }
 
 double score_fit(vector<vector<Point2f>> clustered_points, vector<RotatedRect> rects){
+    double n_rects = rects.size();
     double score = 0;
-    for(int i = 0; i < ((int)rects.size()); i++){
+    for(int i = 0; i < n_rects; i++){
         score += score_fit(clustered_points[i], rects[i]);
     }
         
-    return score
+    return score * (1 + (n_rects / 10.0));
 }
 
-void best_fit_rectangle(vector<Point2f> points, vector<RotatedRect> best_rect, vector<int> best_cluster_idx){
+RotatedRect shift_edge(RotatedRect r, int e){
+    Point2f t_rect_points[4]; 
+    r.points(t_rect_points);
+
+    Point2f diff = t_rect_points[e] - t_rect_points[(e + 1) % 4];
+
+    int inv_epsilon = 10;
+    double C = sqrt(pow(diff.x,2) + pow(diff.y,2)) * inv_epsilon;
+
+    
+    if(C != 0){
+        diff.x /= C;
+        diff.y /= C;
+    }
+    
+    t_rect_points[e].x += diff.y;
+    t_rect_points[e].y -= diff.x;
+    
+    t_rect_points[(e + 1) % 4].x += diff.y;
+    t_rect_points[(e + 1) % 4].y -= diff.x;
+
+    vector<Point2f> p(begin(t_rect_points), end(t_rect_points));
+        
+    RotatedRect new_rect = minAreaRect(p);
+    
+    return new_rect;
+}
+
+RotatedRect optimise_side(RotatedRect r, vector<Point2f> points, int side){
+    RotatedRect new_r(r.center,r.size, r.angle);
+    RotatedRect old_r;
+    double old_score = score_fit(points, new_r);
+    double new_score = old_score; 
+    
+    cout << "\t" << "Starting score: " << old_score << endl;
+    
+    while(new_score <= old_score){
+        old_r = new_r;
+        old_score = new_score;
+        
+        new_r = shift_edge(new_r, side);
+        new_score = score_fit(points, new_r);
+        cout << "\t\t" << "For side " << side << ", new score = " << new_score << endl;
+    }
+    return old_r;
+}
+
+void improve_fit_rectangles(vector<vector<Point2f>> clustered_points, vector<RotatedRect> rects){
+    vector<RotatedRect> new_rects;
+    
+    cout << "Optimising Rectangle Fit" << endl;
+    
+    for(int cluster = 0; cluster < ((int)rects.size()); cluster++){
+        cout << "Optimising Rectangle " << cluster << endl;
+        //Optimise left
+        rects[cluster] = optimise_side(rects[cluster], clustered_points[cluster],0);
+        cout << "\tLeft optimised" << endl;
+        
+        //Optimise top  
+        rects[cluster] = optimise_side(rects[cluster], clustered_points[cluster],1);
+        cout << "\tTop optimised" << endl;
+         
+        //Optimise right
+        rects[cluster] = optimise_side(rects[cluster], clustered_points[cluster],2);
+        cout << "\tRight optimised" << endl;
+        
+        //Optimise bottom      
+        rects[cluster] = optimise_side(rects[cluster], clustered_points[cluster],3);
+        cout << "\tBottom optimised" << endl;
+    }
+}
+
+void best_fit_rectangle(vector<Point2f> points, vector<RotatedRect> &best_rects, vector<vector<Point2f>> &best_clustered_points){
     double best_fit = numeric_limits<double>::max();
     
     //Lets look for no more than 5 objects
@@ -300,7 +375,7 @@ void best_fit_rectangle(vector<Point2f> points, vector<RotatedRect> best_rect, v
         //Sort points
         vector<vector<Point2f>> c_points;
         c_points.resize(n_clusters);        
-        for(int i = 0; i < sample_size; i++){
+        for(int i = 0; i < ((int)points.size()); i++){
             c_points[cluster_idx[i]].push_back(points[i]);
         }
 
@@ -317,25 +392,20 @@ void best_fit_rectangle(vector<Point2f> points, vector<RotatedRect> best_rect, v
         cout << "N clusters = " << n_clusters << ", Score: " << score << endl;
         
         if(score < best_fit){
-            best_rect.assign(rects.begin(),rects.end());
-            best_cluster_idx.assign(cluster_idx.begin(),cluster_idx.end());
+            best_rects.assign(rects.begin(),rects.end());
+            
+            best_clustered_points.clear();
+            best_clustered_points.resize(n_clusters);
+            for(int i = 0; i < n_clusters; i++){
+                best_clustered_points[i].assign(c_points[i].begin(),c_points[i].end());
+            }
             best_fit = score;            
         }
     }
+    
+    improve_fit_rectangles(best_clustered_points, best_rects);
+    cout << "Best rect has " << best_rects.size() << " rects" << endl;
 }
 
-void improve_fit_rectangles(vector<Point2f> points, vector<RotatedRect> rects, vector<int> cluster_idx){
-    for(int cluster = 0; cluster < ((int)best_rect.size(); cluster++){
-//        best_rects[cluster] = fit_rectangle(points, best_rects[cluster], best_cluster_idx);
-        //Optimise left
-        double score = score_fit(points, rects, cluster_idx);
-        
-        while(score
-        
-        //Optimise right
-        //Optimise top  
-        //Optimise bottom      
-        
-    }
-}
+
 
