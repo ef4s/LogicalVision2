@@ -675,14 +675,11 @@ PREDICATE(find_rectangles_from_src, 3){
         points.push_back(pt);
     }
     
-    cout << "Pts processed, number of points: " << sample_size << endl;
     vector<RotatedRect> best_rect;
     vector<vector<Point2f>> best_clustered_points;
     
     best_fit_rectangle(points, best_rect, best_clustered_points);
 
-    cout << "Rec fitted" << ". Best rect size = " << best_rect.size() << endl;
-    
     Mat drawing = src->clone();
     Scalar colorTab[] = {
         Scalar(0, 0, 255),
@@ -698,19 +695,15 @@ PREDICATE(find_rectangles_from_src, 3){
         Point2f rect_points[4]; 
         rect.points( rect_points );
         
-        cout << "Rect[" << i << "]:" << endl;
         for(int j = 0; j < 4; j++ ){
               line(drawing, rect_points[j], rect_points[(j + 1) % 4], colorTab[i], 1, 8);
-              cout << '\t' << rect_points[j] << endl;
         }
         
-        for(int j = 0; j < sample_size; j++){    
+        for(int j = 0; j < ((int)best_clustered_points[i].size()); j++){    
             circle(drawing, best_clustered_points[i][j], 1, colorTab[i], 1);
         }
     }
     
-    cout << "Points drawn" << endl;
-
     /// Show in a window
     namedWindow( "S-LINK", WINDOW_NORMAL );
     imshow( "S-LINK", drawing );

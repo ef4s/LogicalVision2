@@ -201,6 +201,36 @@ PlTerm vecvec2list(vector<vector<Type>> vec, int size_outer, int size_inner) {
     return re_term;
 }
 
+PlTerm pointvecvec2list(vector<vector<Point2f>> vec){
+    
+    //Open outer list
+    term_t re_ref = PL_new_term_ref();
+    PlTerm re_term(re_ref);
+    PlTail re_tail(re_term);
+
+    try {
+        for (vector<Point2f> v : vec) {
+            //Open inner list
+            term_t points_ref = PL_new_term_ref();
+            PlTerm points_term(points_ref);
+            PlTail points_tail(points_term);
+            for (Point2f p : v) {
+                PlTerm point_x((double)p.x);
+                PlTerm point_y((double)p.y);
+
+                points_tail.append(point_x);
+                points_tail.append(point_y);
+            }
+            points_tail.close();
+            re_tail.append(points_term);
+        }
+        re_tail.close();
+    } catch (...) {
+        cerr << "Parsing list error!" << endl;
+    }
+    return re_term;
+}
+
 PlTerm empty_list() {
     PlTerm re;
     PlTail t(re);

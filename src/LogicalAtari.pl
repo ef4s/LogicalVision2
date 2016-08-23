@@ -33,20 +33,19 @@ test_video_source(IDX,BLUR,RESIZE,THRESHOLD,NClusters):-
     %% SAMPLE POINTS PER FRAME
     MaxX2_ is MaxX - 1, MaxX2 is integer(MaxX2_), 
     MaxY2_ is MaxY - 1, MaxY2 is integer(MaxY2_),
+
+    open(’results.txt’,write,Stream), 
     
     
-    
-    find_n_point_samples(100,[MaxX2,MaxY2],IDX,THRESHOLD,Mag_seq_add,Dir_seq_add,Points),
+    find_n_point_samples(100,[MaxY2,MaxX2],IDX,THRESHOLD,Mag_seq_add,Dir_seq_add,Points),
     writeln("Found samples"),
     find_rectangles_from_src(Img_add,Points,C),
     
     %% ADD CENTER TO BACKGROUND KNOWLEDGE
     
     %% FIND RULES TO FIT MOTION PATH OF RECTANGLE CENTER
-    draw_points_2d(Img_add,Points,red),
-    
-    showimg_win(Img_add,debug),
-%    showimg_win(Img_add,debug),
+
+    close(Stream),
     release_imgseq_pointer(Resized_seq_add),
     release_imgseq_pointer(Mag_seq_add),
     release_imgseq_pointer(Dir_seq_add).
@@ -333,14 +332,20 @@ random_edge_point([MaxX, MaxY], Dir, [X,Y]):-
         Y is 0,
         random(0, MaxX,X)).
 
-find_n_point_samples(0,_,_,_,_,_,[]).
 find_n_point_samples(N,Bounds,Z,Threshold,Mag_seq_add,Dir_seq_add,Samples):-
+    M is N * 10,
+    find_n_point_samples(N,M,Bounds,Z,Threshold,Mag_seq_add,Dir_seq_add,Samples).
+    
+find_n_point_samples(0,_,_,_,_,_,_,[]):-writeln("Got to zero").
+find_n_point_samples(_,0,_,_,_,_,_,[]):-writeln("Run out of cycles").
+find_n_point_samples(N,M,Bounds,Z,Threshold,Mag_seq_add,Dir_seq_add,Samples):-
 %    write("N is: "),print(N),nl,
     (random_line_sample(Bounds,Z,Threshold,Mag_seq_add,Dir_seq_add,P1) ->    
         N2 is N - 1,
-        find_n_point_samples(N2,Bounds,Z,Threshold,Mag_seq_add,Dir_seq_add,S),
+        find_n_point_samples(N2,M,Bounds,Z,Threshold,Mag_seq_add,Dir_seq_add,S),
         append([P1],S,Samples); 
-        find_n_point_samples(N,Bounds,Z,Threshold,Mag_seq_add,Dir_seq_add,Samples)).
+        M2 is M - 1,
+        find_n_point_samples(N,M2,Bounds,Z,Threshold,Mag_seq_add,Dir_seq_add,Samples)).
 
 random_line_sample(Bounds,Z,Threshold,Mag_add,Dir_add,Point):-
     random_radian(Dir),
