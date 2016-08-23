@@ -14,22 +14,30 @@ test_video_source(IDX,BLUR,RESIZE,THRESHOLD,NClusters):-
     diff_seq(Img_seq_add, Diff_seq_add),
     release_imgseq(Img_seq_add),    
     
-    writeln("Made it here"),
+    writeln("Calculating image sequence bounds"),
     imgseq_bounds(Diff_seq_add,[MaxX,MaxY,MaxZ]),
     writeln([MaxX,MaxY,MaxZ]),
 
     resize_seq(Diff_seq_add,BLUR,[MaxX,MaxY],Resized_seq_add),        
     release_imgseq_pointer(Diff_seq_add),    
-    
+
+    writeln("Recalculating image sequence bounds"),
+    imgseq_ptr_bounds(Resized_seq_add,[MaxX_1,MaxY_1,MaxZ_1]),
+    writeln([MaxX_1,MaxY_1,MaxZ_1]),
+
     seq_img_ptr(Resized_seq_add,IDX,Img_add),
-    writeln("Made it here"),
 %    show_gradient_image(Img_add),
     gradient_seq(Resized_seq_add, Mag_seq_add, Dir_seq_add),
     writeln("Made it here"),
     
     %% SAMPLE POINTS PER FRAME
-    RESIZE2 is RESIZE - 1,
-    find_n_point_samples(100,[MaxX,MaxY],IDX,THRESHOLD,Mag_seq_add,Dir_seq_add,Points),
+    MaxX2_ is MaxX - 1, MaxX2 is integer(MaxX2_), 
+    MaxY2_ is MaxY - 1, MaxY2 is integer(MaxY2_),
+    
+    
+    
+    find_n_point_samples(100,[MaxX2,MaxY2],IDX,THRESHOLD,Mag_seq_add,Dir_seq_add,Points),
+    writeln("Found samples"),
     find_rectangles_from_src(Img_add,Points,C),
     
     %% ADD CENTER TO BACKGROUND KNOWLEDGE
@@ -39,7 +47,9 @@ test_video_source(IDX,BLUR,RESIZE,THRESHOLD,NClusters):-
     
     showimg_win(Img_add,debug),
 %    showimg_win(Img_add,debug),
-    release_imgseq_pointer(Blur_seq_add).
+    release_imgseq_pointer(Resized_seq_add),
+    release_imgseq_pointer(Mag_seq_add),
+    release_imgseq_pointer(Dir_seq_add).
 
 find_line(Bounds,Z,Mag_seq_add,Dir_seq_add,Line):-
     writeln("Entering find_line"),
@@ -325,7 +335,7 @@ random_edge_point([MaxX, MaxY], Dir, [X,Y]):-
 
 find_n_point_samples(0,_,_,_,_,_,[]).
 find_n_point_samples(N,Bounds,Z,Threshold,Mag_seq_add,Dir_seq_add,Samples):-
-%    print("N is: "),print(N),nl,
+%    write("N is: "),print(N),nl,
     (random_line_sample(Bounds,Z,Threshold,Mag_seq_add,Dir_seq_add,P1) ->    
         N2 is N - 1,
         find_n_point_samples(N2,Bounds,Z,Threshold,Mag_seq_add,Dir_seq_add,S),
@@ -352,6 +362,7 @@ random_line_sample_ex([MaxX,MaxY],[X,Y,Z],Threshold,Dir,Mag_add,Dir_add,Point):-
 random_line_sample_ex(_,Point,_,_,_,_,Point).
 
 point_above_threshold([X,Y,Z],Threshold,Mag_add,Dir_add):-
+%    write("Sampling point: "),write([X,Y,Z]),nl,
     sample_point([X,Y,Z],Mag_add,Dir_add,[Mag,_]),
     AMag is abs(Mag),
     AMag =< Threshold.

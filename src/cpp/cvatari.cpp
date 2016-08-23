@@ -228,9 +228,31 @@ PREDICATE(imgseq_bounds, 2) {
     const string add_seq(p1);
     vector<Mat> *seq = str2ptr<vector<Mat>>(add_seq);
     
+    cout << "Sequence size = " << seq->size() << flush;
+    
     Mat m = seq->at(0);
     
-    vector<double> v = {(double)m.rows - 1,(double)m.cols - 1,(double)seq->size() - 1};
+    cout << ", " << m.rows << ", " << m.cols << endl;
+    
+    vector<double> v = {(double)m.rows,(double)m.cols,(double)seq->size()};
+	return A2 = vec2list(v); 
+}
+
+/* image sequence bounds(+IMGSEQ, -BOUNDS)
+ * Find out bounds of an image sequence
+ */
+PREDICATE(imgseq_ptr_bounds, 2) {
+    char *p1 = (char*) A1;
+    const string add_seq(p1);
+    vector<Mat*> *seq = str2ptr<vector<Mat*>>(add_seq);
+    
+    cout << "Sequence size = " << seq->size() << flush;
+    
+    Mat *m = seq->at(0);
+    
+    cout << ", " << m->rows << ", " << m->cols << endl;
+    
+    vector<double> v = {(double)m->rows,(double)m->cols,(double)seq->size()};
 	return A2 = vec2list(v); 
 }
 
@@ -275,6 +297,7 @@ PREDICATE(resize_seq, 4) {
     
     int blur_size = (int) A2;
     vector<int> target_sz = list2vec<int>(A3, 2);
+    cout << target_sz[0] << ", " << target_sz[1]<< endl;
     
     int ddepth = CV_64F;
 
@@ -661,7 +684,13 @@ PREDICATE(find_rectangles_from_src, 3){
     cout << "Rec fitted" << ". Best rect size = " << best_rect.size() << endl;
     
     Mat drawing = src->clone();
-    RNG rng(12345);
+    Scalar colorTab[] = {
+        Scalar(0, 0, 255),
+        Scalar(0,255,0),
+        Scalar(255,100,100),
+        Scalar(255,0,255),
+        Scalar(0,255,255)
+    };
     
     //Plot rectangles
     for(int i = 0; i < ((int)best_rect.size()); i++){
@@ -669,14 +698,14 @@ PREDICATE(find_rectangles_from_src, 3){
         Point2f rect_points[4]; 
         rect.points( rect_points );
         
-        Scalar color = Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
+        cout << "Rect[" << i << "]:" << endl;
         for(int j = 0; j < 4; j++ ){
-              line( drawing, rect_points[j], rect_points[(j+1)%4], color, 1, 8 );
+              line(drawing, rect_points[j], rect_points[(j + 1) % 4], colorTab[i], 1, 8);
+              cout << '\t' << rect_points[j] << endl;
         }
         
-        color = Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
         for(int j = 0; j < sample_size; j++){    
-            circle(drawing, best_clustered_points[i][j],1, color,1);
+            circle(drawing, best_clustered_points[i][j], 1, colorTab[i], 1);
         }
     }
     
