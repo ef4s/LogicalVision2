@@ -34,13 +34,13 @@ test_video_source(IDX,BLUR,RESIZE,THRESHOLD,NClusters):-
     MaxX2_ is MaxX - 1, MaxX2 is integer(MaxX2_), 
     MaxY2_ is MaxY - 1, MaxY2 is integer(MaxY2_),
 
-    open(’results.txt’,write,Stream), 
+    open("results.txt",write,Stream), 
     
     
     find_n_point_samples(100,[MaxY2,MaxX2],IDX,THRESHOLD,Mag_seq_add,Dir_seq_add,Points),
     writeln("Found samples"),
     find_rectangles_from_src(Img_add,Points,C),
-    
+    writeln(Stream,C),    
     %% ADD CENTER TO BACKGROUND KNOWLEDGE
     
     %% FIND RULES TO FIT MOTION PATH OF RECTANGLE CENTER
