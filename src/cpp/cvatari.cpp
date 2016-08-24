@@ -161,7 +161,6 @@ PREDICATE(blur_seq, 3) {
     const string add_seq(p1);
     vector<Mat> *seq = str2ptr<vector<Mat>>(add_seq);
     vector<Mat*> *blurred_seq = new vector<Mat*>();
-    
     int step_size = (int) A2;
 
     for(vector<Mat>::iterator src = seq->begin(); src != seq->end(); src++){    
@@ -175,8 +174,8 @@ PREDICATE(blur_seq, 3) {
         blurred_seq->push_back(blurred);
     }
 
-    cout << "vid seq len: " << seq->size() << endl;
-    cout << "blurred seq len: " << seq->size() << endl;
+//    cout << "vid seq len: " << seq->size() << endl;
+//    cout << "blurred seq len: " << seq->size() << endl;
 
     string add_blur = ptr2str(blurred_seq);
     A3 = PlTerm(add_blur.c_str());
@@ -209,8 +208,8 @@ PREDICATE(blur_seq_ptr, 3) {
         blurred_seq->push_back(blurred);
     }
 
-    cout << "vid seq len: " << seq->size() << endl;
-    cout << "blurred seq len: " << seq->size() << endl;
+//    cout << "vid seq len: " << seq->size() << endl;
+//    cout << "blurred seq len: " << seq->size() << endl;
 
     string add_blur = ptr2str(blurred_seq);
     A3 = PlTerm(add_blur.c_str());
@@ -228,11 +227,7 @@ PREDICATE(imgseq_bounds, 2) {
     const string add_seq(p1);
     vector<Mat> *seq = str2ptr<vector<Mat>>(add_seq);
     
-    cout << "Sequence size = " << seq->size() << flush;
-    
     Mat m = seq->at(0);
-    
-    cout << ", " << m.rows << ", " << m.cols << endl;
     
     vector<double> v = {(double)m.rows,(double)m.cols,(double)seq->size()};
 	return A2 = vec2list(v); 
@@ -246,11 +241,7 @@ PREDICATE(imgseq_ptr_bounds, 2) {
     const string add_seq(p1);
     vector<Mat*> *seq = str2ptr<vector<Mat*>>(add_seq);
     
-    cout << "Sequence size = " << seq->size() << flush;
-    
     Mat *m = seq->at(0);
-    
-    cout << ", " << m->rows << ", " << m->cols << endl;
     
     vector<double> v = {(double)m->rows,(double)m->cols,(double)seq->size()};
 	return A2 = vec2list(v); 
@@ -266,7 +257,7 @@ PREDICATE(resize_image, 4) {
 
     int img = (int) A2;
  
-    cout << "seq len: " << seq->size() << endl;
+//    cout << "seq len: " << seq->size() << endl;
  
     vector<int> target_sz = list2vec<int>(A3, 2);
 
@@ -297,7 +288,7 @@ PREDICATE(resize_seq, 4) {
     
     int blur_size = (int) A2;
     vector<int> target_sz = list2vec<int>(A3, 2);
-    cout << target_sz[0] << ", " << target_sz[1]<< endl;
+//    cout << target_sz[0] << ", " << target_sz[1]<< endl;
     
     int ddepth = CV_64F;
 
@@ -494,11 +485,11 @@ PREDICATE(find_rectangle, 3){
         cv_pts.push_back(pt);
     }
     
-    cout << "Pts processed" << endl;
+//    cout << "Pts processed" << endl;
     
     RotatedRect rect = minAreaRect(cv_pts);
     
-    cout << "Rec fitted" << endl;
+//    cout << "Rec fitted" << endl;
     
     Point2f rect_points[4]; 
     rect.points( rect_points );
@@ -516,7 +507,7 @@ PREDICATE(find_rectangle, 3){
     }
     
 
-    cout << "Drawing processed" << endl;
+//    cout << "Drawing processed" << endl;
 
     /// Show in a window
     namedWindow( "Contours", WINDOW_NORMAL );
@@ -549,18 +540,18 @@ PREDICATE(k_means_clusters, 3){
         points.push_back(pt);
     }
         
-    cout << "Pts processed" << endl;
+//    cout << "Pts processed" << endl;
     
     int attempts = 10;
     int trials = 1000;
     double epsilon = 1/(double)trials;
     
     TermCriteria criteria(TermCriteria::COUNT + TermCriteria::EPS, trials, epsilon);
-    cout << "Criteria processed" << endl;
+//    cout << "Criteria processed" << endl;
     
     kmeans(points, clusterCount, labels, criteria, attempts, KMEANS_PP_CENTERS, centers);
     
-    cout << "K-Means fitted" << endl;
+//    cout << "K-Means fitted" << endl;
     
     Mat drawing = src->clone();
 
@@ -583,7 +574,7 @@ PREDICATE(k_means_clusters, 3){
         circle(drawing, points.at(i),1,colorTab[clusterIdx],3);
     }
     
-    cout << "Points drawn" << endl;
+//    cout << "Points drawn" << endl;
 //    
     
 //    for(int i = 0; i < sampleCount; i++ ){
@@ -593,7 +584,7 @@ PREDICATE(k_means_clusters, 3){
 //    }
     
 
-    cout << "Drawing processed" << endl;
+//    cout << "Drawing processed" << endl;
 
     /// Show in a window
     namedWindow( "Contours", WINDOW_NORMAL );
@@ -624,11 +615,11 @@ PREDICATE(single_link_clusters, 4){
         points.push_back(pt);
     }
         
-    cout << "Pts processed" << endl;
+//    cout << "Pts processed" << endl;
     
     vector<int> clusters = single_link_cluster(points, clusterCount);
 
-    cout << "Single Link fitted" << endl;
+//    cout << "Single Link fitted" << endl;
     
     Mat drawing = src->clone();
     Scalar colorTab[] = {
@@ -643,7 +634,7 @@ PREDICATE(single_link_clusters, 4){
         circle(drawing, points[i],1,colorTab[clusters[i]],1);
     }
     
-    cout << "Points drawn" << endl;
+//    cout << "Points drawn" << endl;
 
     /// Show in a window
     namedWindow( "S-LINK", WINDOW_NORMAL );
@@ -655,15 +646,18 @@ PREDICATE(single_link_clusters, 4){
 }
 
 
-/* find_rectangle(+SRC, +POINTS, -RECTANGLE)
+/* find_rectangle(+IMG_SEQ, +FRAME, +POINTS, -RECTANGLE)
  */
-PREDICATE(find_rectangles_from_src, 3){
+PREDICATE(find_rectangles_from_src, 4){
     char *p1 = (char*) A1;
-    const string add_img(p1);
-    Mat *src = str2ptr<Mat>(add_img);
-
-    vector<Scalar> pts = point_list2vec(A2);
-
+    const string img_seq_add(p1); 
+    vector<Mat*> *img_seq = str2ptr<vector<Mat*>>(img_seq_add);
+    
+    int frame = (int)A2;
+    
+    Mat *src = img_seq->at(frame); 
+    
+    vector<Scalar> pts = point_list2vec(A3);
     vector<Point2f> points;
     
     int sample_size = pts.size();
@@ -680,37 +674,62 @@ PREDICATE(find_rectangles_from_src, 3){
     
     best_fit_rectangle(points, best_rects, best_clustered_points);
 
-//    Mat drawing = src->clone();
-//    Scalar colorTab[] = {
-//        Scalar(0, 0, 255),
-//        Scalar(0,255,0),
-//        Scalar(255,100,100),
-//        Scalar(255,0,255),
-//        Scalar(0,255,255)
-//    };
-//    
-//    //Plot rectangles
-//    for(int i = 0; i < ((int)best_rects.size()); i++){
-//        RotatedRect rect = best_rects[i];
-//        Point2f rect_points[4]; 
-//        rect.points( rect_points );
-//        
-//        for(int j = 0; j < 4; j++ ){
-//              line(drawing, rect_points[j], rect_points[(j + 1) % 4], colorTab[i], 1, 8);
-//        }
-//        
-//        for(int j = 0; j < ((int)best_clustered_points[i].size()); j++){    
-//            circle(drawing, best_clustered_points[i][j], 1, colorTab[i], 1);
-//        }
-//    }
-//    
-//    /// Show in a window
-//    namedWindow( "S-LINK", WINDOW_NORMAL );
-//    imshow( "S-LINK", drawing );
-//    waitKey(0);
-//    destroyWindow("S-LINK");
+    Mat drawing = src->clone();
+    Scalar colorTab[] = {
+        Scalar(0, 0, 255),
+        Scalar(0,255,0),
+        Scalar(255,100,100),
+        Scalar(255,0,255),
+        Scalar(0,255,255)
+    };
+    
+    //Plot rectangles
+    for(int i = 0; i < ((int)best_rects.size()); i++){
+        RotatedRect rect = best_rects[i];
+        Point2f rect_points[4]; 
+        rect.points( rect_points );
+        
+        for(int j = 0; j < 4; j++ ){
+              line(drawing, rect_points[j], rect_points[(j + 1) % 4], colorTab[i], 1, 8);
+        }
+        
+        for(int j = 0; j < ((int)best_clustered_points[i].size()); j++){    
+            circle(drawing, best_clustered_points[i][j], 1, colorTab[i], 1);
+        }
+    }
+    
+    /// Show in a window
+    namedWindow( "S-LINK", WINDOW_NORMAL );
+    imshow( "S-LINK", drawing );
+    waitKey(0);
+    destroyWindow("S-LINK");
 
-    return A3 = rectvec2list(best_rects); 
+    return A4 = rectvec2list(best_rects); 
+}
+
+
+
+/* find_rectangles(+POINTS, -RECTANGLE)
+ */
+PREDICATE(find_rectangles, 2){
+    vector<Scalar> pts = point_list2vec(A1);
+    vector<Point2f> points;
+    
+    int sample_size = pts.size();
+    
+    for(int i = 0; i < sample_size; i++){
+        Scalar s = pts.at(i);
+        Point2f pt(s[0],s[1]);
+        
+        points.push_back(pt);
+    }
+    
+    vector<RotatedRect> best_rects;
+    vector<vector<Point2f>> best_clustered_points;
+    
+    best_fit_rectangle(points, best_rects, best_clustered_points);
+
+    return A2 = rectvec2list(best_rects); 
 }
 
 
