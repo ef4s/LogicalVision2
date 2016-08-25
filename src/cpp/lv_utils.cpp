@@ -352,14 +352,14 @@ RotatedRect optimise_side(const RotatedRect r, const vector<Point2f> points, con
     double old_score = score_fit(points, new_r);
     double new_score = old_score; 
     
-    if(old_score != 0){
+    if(old_score > 1){
         while(new_score <= old_score){
             old_r = new_r;
             old_score = new_score;
             
             new_r = shift_edge(new_r, side);
             new_score = score_fit(points, new_r);
-    //        cout << "\t\t" << "For side " << side << ", new score = " << new_score << endl;
+//            cout << "\t\t" << "For side " << side << ", new score = " << new_score << endl;
         }
     }
     
@@ -385,6 +385,7 @@ void improve_fit_rectangles(const vector<vector<Point2f>> clustered_points, vect
 void best_fit_rectangle(const vector<Point2f> points, vector<RotatedRect> &best_rects, vector<vector<Point2f>> &best_clustered_points){
     double best_fit = numeric_limits<double>::max();
     
+//    cout << "\tFinding rectangles..." << flush;
     //Lets look for no more than 5 objects
     for(int n_clusters = 1; n_clusters <= 5; n_clusters++){
         //Classify Points
@@ -418,8 +419,11 @@ void best_fit_rectangle(const vector<Point2f> points, vector<RotatedRect> &best_
             best_fit = score;            
         }
     }
+//    cout << "done" << endl;
     
+//    cout << "\tImproving fit..." << flush;
     improve_fit_rectangles(best_clustered_points, best_rects);
+//    cout << "done" << endl;
 }
 
 

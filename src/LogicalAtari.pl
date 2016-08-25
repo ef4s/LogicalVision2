@@ -6,8 +6,8 @@
 mindist(2).
 line([0,0,0],[0,0,0]).
 
-test_video_source(BLUR,THRESHOLD):-
-    format(atom(Vid_file), 'data/~w', ['space_invaders.mp4']),
+test_video_source(FILE,BLUR,THRESHOLD,NSAMPLES):-
+    format(atom(Vid_file), 'data/space_invaders/~w', [FILE]),
     load_video(Vid_file, Vid_add),    
 
     video2imgseq(Vid_add, Img_seq_add),
@@ -15,7 +15,9 @@ test_video_source(BLUR,THRESHOLD):-
 
     diff_seq(Img_seq_add, Diff_seq_add),
     imgseq_bounds(Diff_seq_add,[MaxX,MaxY,MaxZ]),
-    release_imgseq(Img_seq_add),    
+    release_imgseq(Img_seq_add),  
+    
+    writeln([MaxX,MaxY,MaxZ]),
     
     resize_seq(Diff_seq_add,BLUR,[MaxX,MaxY],Resized_seq_add),        
     release_imgseq_pointer(Diff_seq_add),    
@@ -25,11 +27,15 @@ test_video_source(BLUR,THRESHOLD):-
     %% SAMPLE POINTS PER FRAME
     MaxX2_ is MaxX - 1, MaxX2 is integer(MaxX2_), 
     MaxY2_ is MaxY - 1, MaxY2 is integer(MaxY2_),
+    MaxZ2_ is MaxZ - 1, MaxZ2 is integer(MaxZ2_),
 
-    open("results.txt",write,Stream), 
+    file_name_extension(F_name,_,FILE),
+    string_concat(F_name,'_results.txt',Results),
+    open(Results,write,Stream), 
 %    process_video([MaxY2,MaxX2,MaxZ],THRESHOLD,Mag_seq_add,Dir_seq_add,Stream),
-    process_video([MaxY2,MaxX2,5],THRESHOLD,Mag_seq_add,Dir_seq_add,Stream),
-
+    write(Stream,"["),
+    process_video(NSAMPLES,[MaxY2,MaxX2,MaxZ2],THRESHOLD,Mag_seq_add,Dir_seq_add,Stream),
+    write(Stream,"]"),
     %% FIND RULES TO FIT MOTION PATH OF RECTANGLE CENTER
 
     close(Stream),
@@ -37,19 +43,19 @@ test_video_source(BLUR,THRESHOLD):-
     release_imgseq_pointer(Mag_seq_add),
     release_imgseq_pointer(Dir_seq_add).
 
-process_video([X,Y,Z],THRESHOLD,Mag_seq_add,Dir_seq_add,Stream):-
+process_video(NSAMPLES,[X,Y,Z],THRESHOLD,Mag_seq_add,Dir_seq_add,Stream):-
     writeln("STARTING PROCESSING"),
-    process_video([X,Y,Z],0,THRESHOLD,Mag_seq_add,Dir_seq_add,Stream).
+    process_video(NSAMPLES,[X,Y,Z],0,THRESHOLD,Mag_seq_add,Dir_seq_add,Stream).
 
-process_video([_,_,Z],Z,_,_,_,_):-writeln("Processing done!").
+process_video(_,[_,_,Z],Z,_,_,_,_):-writeln("Processing done!").
 
-process_video([X,Y,Z],IDX,THRESHOLD,Mag_seq_add,Dir_seq_add,Stream):-
-    find_n_point_samples(100,[X,Y],IDX,THRESHOLD,Mag_seq_add,Dir_seq_add,Points),
+process_video(NSAMPLES,[X,Y,Z],IDX,THRESHOLD,Mag_seq_add,Dir_seq_add,Stream):-
+    find_n_point_samples(NSAMPLES,[X,Y],IDX,THRESHOLD,Mag_seq_add,Dir_seq_add,Points),
     find_rectangles(Points,Rects),
-    writeln(Stream,Rects),
+    write(Stream,"["),write(Stream,Rects),write(Stream,"],"),
     IDX2 is IDX + 1,
-    write("Processing: "),write(IDX),nl,
-    process_video([X,Y,Z],IDX2,THRESHOLD,Mag_seq_add,Dir_seq_add,Stream).
+    write("Processing: "),write(IDX), write(" of "), write(Z), write(". "), format('~2f%',100 * IDX / Z),nl,
+    process_video(NSAMPLES,[X,Y,Z],IDX2,THRESHOLD,Mag_seq_add,Dir_seq_add,Stream).
 
 random_radian(Radian):-
     % Returns a number in (0, 2*pi)
@@ -123,8 +129,8 @@ find_n_point_samples(N,Bounds,Z,Threshold,Mag_seq_add,Dir_seq_add,Samples):-
     M is N * 10,
     find_n_point_samples(N,M,Bounds,Z,Threshold,Mag_seq_add,Dir_seq_add,Samples).
     
-find_n_point_samples(0,_,_,_,_,_,_,[]).
-find_n_point_samples(_,0,_,_,_,_,_,[]).
+find_n_point_samples(0,_,_,_,_,_,_,[]):-writeln("Found points").
+find_n_point_samples(_,0,_,_,_,_,_,[]):-writeln("Gave up").
 find_n_point_samples(N,M,Bounds,Z,Threshold,Mag_seq_add,Dir_seq_add,Samples):-
     (random_line_sample(Bounds,Z,Threshold,Mag_seq_add,Dir_seq_add,P1) ->    
         N2 is N - 1,

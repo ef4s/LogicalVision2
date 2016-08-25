@@ -716,6 +716,7 @@ PREDICATE(find_rectangles, 2){
     vector<Point2f> points;
     
     int sample_size = pts.size();
+    cout << "Number of points: " << sample_size << ". " << flush;
     
     for(int i = 0; i < sample_size; i++){
         Scalar s = pts.at(i);
@@ -727,7 +728,11 @@ PREDICATE(find_rectangles, 2){
     vector<RotatedRect> best_rects;
     vector<vector<Point2f>> best_clustered_points;
     
+    cout << "Fitting rectangles..." << flush;
+    
     best_fit_rectangle(points, best_rects, best_clustered_points);
+    
+    cout << " done, number of rectangles found: " << best_rects.size() << endl;
 
     return A2 = rectvec2list(best_rects); 
 }

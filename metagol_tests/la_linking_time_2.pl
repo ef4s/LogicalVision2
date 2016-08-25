@@ -1,5 +1,4 @@
 %% Learning object motion strategies
-
 :- use_module('../metagol/metagol').
 :- use_module(library(charsio)).
 :- use_module(library(lists)).
