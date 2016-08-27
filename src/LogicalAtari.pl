@@ -16,9 +16,9 @@ test_video_source(FILE,BLUR,THRESHOLD,NSAMPLES):-
     imgseq_bounds(Diff_seq_add,[MaxX,MaxY,MaxZ]),
 %    release_imgseq(Img_seq_add),  
     
-    writeln([MaxX,MaxY,MaxZ]),
+%    writeln([MaxX,MaxY,MaxZ]),
     
-    resize_seq(Diff_seq_add,BLUR,[MaxX,MaxY],Resized_seq_add),        
+    resize_seq(Diff_seq_add,BLUR,[210,320],Resized_seq_add),        
     release_imgseq_pointer(Diff_seq_add),    
 
     gradient_seq(Resized_seq_add, Mag_seq_add, Dir_seq_add),
@@ -32,7 +32,7 @@ test_video_source(FILE,BLUR,THRESHOLD,NSAMPLES):-
         
     open(Results_File,write,Stream), 
 
-    process_video(NSAMPLES,[MaxY2,MaxX2,MaxZ2],THRESHOLD,Img_seq_add,Resized_seq_add,Mag_seq_add,Dir_seq_add,Stream),
+    process_video(NSAMPLES,[320,210,MaxZ2],THRESHOLD,Img_seq_add,Resized_seq_add,Mag_seq_add,Dir_seq_add,Stream),
 
     close(Stream),
     release_imgseq_pointer(Resized_seq_add),

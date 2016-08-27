@@ -49,7 +49,7 @@ metarule([P,Q,A,B],([P,A,B]:-[[Q,A,C],@term_gt(A,C),[P,C,B],@term_gt(C,B)])).
 
 % SEE WHAT HAPPENS?
 
-named_shape(alien_rectangle,[_,_,0,160,400]).
+named_shape(alien_rectangle,[0,160,400]).
 %a :-
 %  Pos = [t(Input,S)],
 %  Neg = [],
@@ -71,19 +71,17 @@ move_down(shape([_,Y1,_,_,_]),shape([_,Y2,_,_,_])):-
 find_shape([H|T],Shape,New_Shape):-
     (similar_shape(H,Shape)->New_Shape = H;find_shape(T,Shape,New_Shape)).   
     
-similar_shape(shape([_,_,A1,W1,H1]),named_shape(_,[_,_,A2,W2,H2])):-
-    writeln("TESTING"),
-    similar_angle(A1,A2),writeln("SIMILAR ANGLE"),
-    similar_size([W1,H1],[W2,H2]),writeln("SIMILAR SIZE").        
+similar_shape(shape([_,_,A1,W1,H1]),[A2,W2,H2]):-
+    similar_angle(A1,A2),
+    similar_size([W1,H1],[W2,H2]).        
     
 similar_angle(A1,A2):-
-    write(A1),write(" vs "),write(A2),
     30 > abs(A1 - A2). 
     
 similar_size([W1,H1],[W2,H2]):-
     area(W1,H1,A1),
     area(W2,H2,A2),
-    5 > abs(A1 - A2).
+    A1 * 0.05 > abs(A1 - A2).
     
 area(W,H,A):- A is W * H.
 
