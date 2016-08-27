@@ -3,8 +3,7 @@
 	load_foreign_library(foreign('libs/cvdraw.so')),
 	load_foreign_library(foreign('libs/cvatari.so')).
 	
-mindist(2).
-line([0,0,0],[0,0,0]).
+mindist(5).
 
 test_video_source(FILE,BLUR,THRESHOLD,NSAMPLES):-
     format(atom(Vid_file), 'data/space_invaders/~w', [FILE]),
@@ -15,7 +14,7 @@ test_video_source(FILE,BLUR,THRESHOLD,NSAMPLES):-
 
     diff_seq(Img_seq_add, Diff_seq_add),
     imgseq_bounds(Diff_seq_add,[MaxX,MaxY,MaxZ]),
-    release_imgseq(Img_seq_add),  
+%    release_imgseq(Img_seq_add),  
     
     writeln([MaxX,MaxY,MaxZ]),
     
@@ -29,33 +28,48 @@ test_video_source(FILE,BLUR,THRESHOLD,NSAMPLES):-
     MaxY2_ is MaxY - 1, MaxY2 is integer(MaxY2_),
     MaxZ2_ is MaxZ - 1, MaxZ2 is integer(MaxZ2_),
 
-    file_name_extension(F_name,_,FILE),
-    string_concat(F_name,'_results.txt',Results),
-    open(Results,write,Stream), 
-%    process_video([MaxY2,MaxX2,MaxZ],THRESHOLD,Mag_seq_add,Dir_seq_add,Stream),
-    write(Stream,"["),
-    process_video(NSAMPLES,[MaxY2,MaxX2,MaxZ2],THRESHOLD,Mag_seq_add,Dir_seq_add,Stream),
-    write(Stream,"]"),
-    %% FIND RULES TO FIT MOTION PATH OF RECTANGLE CENTER
+    new_f_name(FILE,Results_File),
+        
+    open(Results_File,write,Stream), 
+
+    process_video(NSAMPLES,[MaxY2,MaxX2,MaxZ2],THRESHOLD,Img_seq_add,Resized_seq_add,Mag_seq_add,Dir_seq_add,Stream),
 
     close(Stream),
     release_imgseq_pointer(Resized_seq_add),
     release_imgseq_pointer(Mag_seq_add),
     release_imgseq_pointer(Dir_seq_add).
+    
+new_f_name(Img_File,Results_File):-
+    file_name_extension(F_name_1,_,Img_File),
+    string_concat(F_name_1,'_results_',F_name_2),
+    random(1,1000000000,E),
+    string_concat(F_name_2,E,F_name_3),
+    string_concat(F_name_3,'.pl',Results_File).
 
-process_video(NSAMPLES,[X,Y,Z],THRESHOLD,Mag_seq_add,Dir_seq_add,Stream):-
+process_video(NSAMPLES,[X,Y,Z],Threshold,Img_seq_add,Resized_seq_add,Mag_seq_add,Dir_seq_add,Stream):-
     writeln("STARTING PROCESSING"),
-    process_video(NSAMPLES,[X,Y,Z],0,THRESHOLD,Mag_seq_add,Dir_seq_add,Stream).
+    process_video(NSAMPLES,[X,Y,Z],0,Threshold,Img_seq_add,Resized_seq_add,Mag_seq_add,Dir_seq_add,Stream).
 
-process_video(_,[_,_,Z],Z,_,_,_,_):-writeln("Processing done!").
+process_video(_,[_,_,Z],Z,_,_,_,_,_):-writeln("Processing done!").
 
-process_video(NSAMPLES,[X,Y,Z],IDX,THRESHOLD,Mag_seq_add,Dir_seq_add,Stream):-
-    find_n_point_samples(NSAMPLES,[X,Y],IDX,THRESHOLD,Mag_seq_add,Dir_seq_add,Points),
+process_video(NSAMPLES,[X,Y,Z],IDX,Threshold,Img_seq_add,Resized_seq_add,Mag_seq_add,Dir_seq_add,Stream):-
+    find_n_point_samples(NSAMPLES,[X,Y],IDX,Threshold,Mag_seq_add,Dir_seq_add,Points),
+%    find_rectangles_from_src(Resized_seq_add, IDX, Points, Rects),
+%    show_seq_img(Img_seq_add,IDX),
     find_rectangles(Points,Rects),
-    write(Stream,"["),write(Stream,Rects),write(Stream,"],"),
+    write(Stream,"frame("),write(Stream,IDX),write(Stream,",["),write_shapes(Stream,Rects),writeln(Stream,"])."),
     IDX2 is IDX + 1,
     write("Processing: "),write(IDX), write(" of "), write(Z), write(". "), format('~2f%',100 * IDX / Z),nl,
-    process_video(NSAMPLES,[X,Y,Z],IDX2,THRESHOLD,Mag_seq_add,Dir_seq_add,Stream).
+    process_video(NSAMPLES,[X,Y,Z],IDX2,Threshold,Img_seq_add,Resized_seq_add,Mag_seq_add,Dir_seq_add,Stream).
+
+write_shapes(_,[]).
+
+write_shapes(Stream,[H]):-
+    write(Stream,"shape("),write(Stream,H),write(Stream,")").
+    
+write_shapes(Stream,[H|T]):-
+    write(Stream,"shape("),write(Stream,H),write(Stream,"),"),
+    write_shapes(Stream,T).
 
 random_radian(Radian):-
     % Returns a number in (0, 2*pi)
@@ -126,37 +140,35 @@ random_edge_point([MaxX, MaxY], Dir, [X,Y]):-
         random(0, MaxX,X)).
 
 find_n_point_samples(N,Bounds,Z,Threshold,Mag_seq_add,Dir_seq_add,Samples):-
-    M is N * 10,
-    find_n_point_samples(N,M,Bounds,Z,Threshold,Mag_seq_add,Dir_seq_add,Samples).
+    M is N * 5,
+    find_n_point_samples_inner(N,M,Bounds,Z,Threshold,Mag_seq_add,Dir_seq_add,Samples).
     
-find_n_point_samples(0,_,_,_,_,_,_,[]):-writeln("Found points").
-find_n_point_samples(_,0,_,_,_,_,_,[]):-writeln("Gave up").
-find_n_point_samples(N,M,Bounds,Z,Threshold,Mag_seq_add,Dir_seq_add,Samples):-
+find_n_point_samples_inner(N,_,_,_,_,_,_,[]):-N =< 0, writeln("Found points").
+find_n_point_samples_inner(_,M,_,_,_,_,_,[]):-M =< 0, writeln("Gave up").
+find_n_point_samples_inner(N,M,Bounds,Z,Threshold,Mag_seq_add,Dir_seq_add,Samples):-
+    M2 is M - 1,
     (random_line_sample(Bounds,Z,Threshold,Mag_seq_add,Dir_seq_add,P1) ->    
         N2 is N - 1,
-        find_n_point_samples(N2,M,Bounds,Z,Threshold,Mag_seq_add,Dir_seq_add,S),
-        append([P1],S,Samples); 
-        M2 is M - 1,
-        find_n_point_samples(N,M2,Bounds,Z,Threshold,Mag_seq_add,Dir_seq_add,Samples)).
+        find_n_point_samples_inner(N2,M2,Bounds,Z,Threshold,Mag_seq_add,Dir_seq_add,S),
+        append([P1],S,Samples);
+        find_n_point_samples_inner(N,M2,Bounds,Z,Threshold,Mag_seq_add,Dir_seq_add,Samples)).
 
 random_line_sample(Bounds,Z,Threshold,Mag_add,Dir_add,Point):-
     random_radian(Dir),
     random_edge_point(Bounds,Dir,[X,Y]),
-    Start = [X,Y,Z],
-    random_line_sample_ex(Bounds,Start,Threshold,Dir,Mag_add,Dir_add,Point).
+    random_line_sample_ex(Bounds,[X,Y,Z],Threshold,Dir,Mag_add,Dir_add,Point).
              
 random_line_sample_ex(Bounds,[X,Y,Z],Threshold,Dir,Mag_add,Dir_add,Point):-
-    point_above_threshold([X,Y,Z],Threshold,Mag_add,Dir_add),
     add_coords_2d([X,Y],Dir,[Nx,Ny]),
     point_within_bounds([Nx,Ny],Bounds),
-    random_line_sample_ex(Bounds,[Nx,Ny,Z],Threshold,Dir,Mag_add,Dir_add,Point).
-
-random_line_sample_ex(_,Point,_,_,_,_,Point).
+    (point_above_threshold([Nx,Ny,Z],Threshold,Mag_add,Dir_add)->
+        Point = [Nx,Ny,Z];
+        random_line_sample_ex(Bounds,[Nx,Ny,Z],Threshold,Dir,Mag_add,Dir_add,Point)).
 
 point_above_threshold([X,Y,Z],Threshold,Mag_add,Dir_add):-
     sample_point([X,Y,Z],Mag_add,Dir_add,[Mag,_]),
     AMag is abs(Mag),
-    AMag =< Threshold.
+    AMag >= Threshold.
 
 point_within_bounds([X,Y],[MaxX,MaxY]):-
     X >= 0, X =< MaxX, Y >= 0, Y =< MaxY.

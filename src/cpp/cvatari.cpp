@@ -646,7 +646,7 @@ PREDICATE(single_link_clusters, 4){
 }
 
 
-/* find_rectangle(+IMG_SEQ, +FRAME, +POINTS, -RECTANGLE)
+/* find_rectangles_from_src(+IMG_SEQ, +FRAME, +POINTS, -RECTANGLE)
  */
 PREDICATE(find_rectangles_from_src, 4){
     char *p1 = (char*) A1;
@@ -655,13 +655,12 @@ PREDICATE(find_rectangles_from_src, 4){
     
     int frame = (int)A2;
     
-    Mat *src = img_seq->at(frame); 
-    
     vector<Scalar> pts = point_list2vec(A3);
     vector<Point2f> points;
     
     int sample_size = pts.size();
-    
+    cout << "Number of points: " << sample_size << ". " << flush;
+
     for(int i = 0; i < sample_size; i++){
         Scalar s = pts.at(i);
         Point2f pt(s[0],s[1]);
@@ -669,12 +668,16 @@ PREDICATE(find_rectangles_from_src, 4){
         points.push_back(pt);
     }
     
-    vector<RotatedRect> best_rects;
+    vector<RotatedRect> best_rects;    
     vector<vector<Point2f>> best_clustered_points;
     
+    cout << "Fitting rectangles..." << flush;
+    
     best_fit_rectangle(points, best_rects, best_clustered_points);
+    
+    cout << " done, number of rectangles found: " << best_rects.size() << endl;
 
-    Mat drawing = src->clone();
+    Mat drawing = img_seq->at(frame)->clone();
     Scalar colorTab[] = {
         Scalar(0, 0, 255),
         Scalar(0,255,0),
@@ -717,7 +720,7 @@ PREDICATE(find_rectangles, 2){
     
     int sample_size = pts.size();
     cout << "Number of points: " << sample_size << ". " << flush;
-    
+
     for(int i = 0; i < sample_size; i++){
         Scalar s = pts.at(i);
         Point2f pt(s[0],s[1]);
@@ -725,7 +728,7 @@ PREDICATE(find_rectangles, 2){
         points.push_back(pt);
     }
     
-    vector<RotatedRect> best_rects;
+    vector<RotatedRect> best_rects;    
     vector<vector<Point2f>> best_clustered_points;
     
     cout << "Fitting rectangles..." << flush;
@@ -733,7 +736,7 @@ PREDICATE(find_rectangles, 2){
     best_fit_rectangle(points, best_rects, best_clustered_points);
     
     cout << " done, number of rectangles found: " << best_rects.size() << endl;
-
+        
     return A2 = rectvec2list(best_rects); 
 }
 

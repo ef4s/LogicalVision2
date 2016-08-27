@@ -225,8 +225,6 @@ vector<vector<double>> calc_distances(const vector<Point2f> points, const vector
 vector<int> single_link_cluster(const vector<Point2f> points, const int n_clusters){
     int n_points = points.size();
 
-    assert(n_points > n_clusters);
-  
     vector<vector<int>> links;
     for(int i = 0; i < n_points; i++){
         //each element is linked to itself
@@ -318,15 +316,13 @@ double score_fit(const vector<vector<Point2f>> clustered_points, const vector<Ro
     return score / dist;
 }
 
-RotatedRect shift_edge(const RotatedRect r, const int e){
+RotatedRect shift_edge(const RotatedRect r, const int e, const int inv_epsilon){
     Point2f t_rect_points[4]; 
     r.points(t_rect_points);
 
     Point2f diff = t_rect_points[e] - t_rect_points[(e + 1) % 4];
 
-    int inv_epsilon = 10;
     double C = sqrt(pow(diff.x,2) + pow(diff.y,2)) * inv_epsilon;
-
     
     if(C != 0){
         diff.x /= C;
@@ -352,12 +348,14 @@ RotatedRect optimise_side(const RotatedRect r, const vector<Point2f> points, con
     double old_score = score_fit(points, new_r);
     double new_score = old_score; 
     
-    if(old_score > 1){
+    const int inv_epsilon = 10;
+    
+    if(old_score > 1 /  ((double) inv_epsilon)){
         while(new_score <= old_score){
             old_r = new_r;
             old_score = new_score;
             
-            new_r = shift_edge(new_r, side);
+            new_r = shift_edge(new_r, side, inv_epsilon);
             new_score = score_fit(points, new_r);
 //            cout << "\t\t" << "For side " << side << ", new score = " << new_score << endl;
         }
@@ -383,25 +381,30 @@ void improve_fit_rectangles(const vector<vector<Point2f>> clustered_points, vect
 }
 
 void best_fit_rectangle(const vector<Point2f> points, vector<RotatedRect> &best_rects, vector<vector<Point2f>> &best_clustered_points){
+    
+    int n_points = (int)points.size();
+    
+    if(n_points == 0){return;}
+
     double best_fit = numeric_limits<double>::max();
     
 //    cout << "\tFinding rectangles..." << flush;
     //Lets look for no more than 5 objects
-    for(int n_clusters = 1; n_clusters <= 5; n_clusters++){
+    for(int n_clusters = 4; n_clusters >= 1; n_clusters--){
         //Classify Points
         vector<int> cluster_idx = single_link_cluster(points, n_clusters);
         
         //Sort points
         vector<vector<Point2f>> c_points;
-        c_points.resize(n_clusters);        
-        for(int i = 0; i < ((int)points.size()); i++){
+        c_points.resize(((int)cluster_idx.size()));        
+        for(int i = 0; i < n_points; i++){
             c_points[cluster_idx[i]].push_back(points[i]);
         }
 
         //Fit rectangles
         vector<RotatedRect> rects;
-        rects.resize(n_clusters);
-        for(int cluster = 0; cluster < n_clusters; cluster++){
+        rects.resize(((int)cluster_idx.size()));
+        for(int cluster = 0; cluster < ((int)cluster_idx.size()); cluster++){
             rects[cluster] = minAreaRect(c_points[cluster]);
         }
         
@@ -412,7 +415,7 @@ void best_fit_rectangle(const vector<Point2f> points, vector<RotatedRect> &best_
             best_rects.assign(rects.begin(),rects.end());
             
             best_clustered_points.clear();
-            best_clustered_points.resize(n_clusters);
+            best_clustered_points.resize(((int)cluster_idx.size()));
             for(int i = 0; i < ((int)points.size()); i++){
                 best_clustered_points[cluster_idx[i]].push_back(points[i]);
             }

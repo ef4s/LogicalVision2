@@ -14,7 +14,7 @@ func_test(Atom,PS,G):-
 
 %% METARULES
 %metarule([P,Q],([P,A]:-[[Q,A]])).
-metarule([P,Q],([P,A]:-[[Q,A,B]])).
+metarule([P,Q],([P,A]:-[[Q,A,_]])).
 %metarule([P,Q,R],([P,A]:-[[Q,C],[R,A,C]])).
 %metarule([P,Q,R],([P,A]:-[[Q,A,C],[R,C,B]])).
 
@@ -41,41 +41,43 @@ metarule([P,Q,B],([P,A,B]:-[[Q,A,C],@term_gt(A,C),[P,C,B],@term_gt(C,B)])).
 metarule([P,Q,A,B],([P,A,B]:-[[Q,A,C],@term_gt(A,C),[P,C,B],@term_gt(C,B)])). 
 %metarule([P,Q,A,B],([P,[A|B]]:-[[Q,A,C],@term_gt(A,C),[P,C,B],@term_gt(C,B)])). 
 */
-shape(0,1,1).
 
-S = [_,_,_,630,300].
-a :-
-  Pos = [t(Input,S)],
-  Neg = [],
-  learn(Pos,Neg,H),
-  pprint(H).
+% EXTRACT OUT SIMILAR SHAPES
+    % WHAT SIZE IS SPACE INVADERS?
 
-move_left([X1,_,_,_,_],[X2,_,_,_,_]):-
+% GIVE THEM TO METAGOL
+
+% SEE WHAT HAPPENS?
+
+named_shape(alien_rectangle,[_,_,0,160,400]).
+%a :-
+%  Pos = [t(Input,S)],
+%  Neg = [],
+%  learn(Pos,Neg,H),
+%  pprint(H).
+
+move_left(shape([X1,_,_,_,_]),shape([X2,_,_,_,_])):-
     X1 > X2.
 
-move_right([X1,_,_,_,_],[X2,_,_,_,_]):-
+move_right(shape([X1,_,_,_,_]),shape([X2,_,_,_,_])):-
     X1 < X2.
 
-move_up([_,Y1,_,_,_],[_,Y2,_,_,_]):-
+move_up(shape([_,Y1,_,_,_]),shape([_,Y2,_,_,_])):-
     Y1 > Y2.
 
-move_down([_,Y1,_,_,_],[_,Y2,_,_,_]):-
+move_down(shape([_,Y1,_,_,_]),shape([_,Y2,_,_,_])):-
     Y1 < Y2.
 
-new_shape(Shape):-
-    shape(A1,W1,H1),
-    similar_shape(Shape,[_,_,A1,W1,H1]).
-
-new_shape(Shape):-assert(A1,W1,H1).
-
-find_shape([H|T],Shape):-
-    (similar_shape(H,Shape)->true;find_shape(T,Shape)).   
+find_shape([H|T],Shape,New_Shape):-
+    (similar_shape(H,Shape)->New_Shape = H;find_shape(T,Shape,New_Shape)).   
     
-similar_shape([_,_,A1,W1,H1],[_,_,A2,W2,H2]):-
-    similar_angle(A1,A2),
-    similar_size([W1,H1],[W2,H2]).        
+similar_shape(shape([_,_,A1,W1,H1]),named_shape(_,[_,_,A2,W2,H2])):-
+    writeln("TESTING"),
+    similar_angle(A1,A2),writeln("SIMILAR ANGLE"),
+    similar_size([W1,H1],[W2,H2]),writeln("SIMILAR SIZE").        
     
 similar_angle(A1,A2):-
+    write(A1),write(" vs "),write(A2),
     30 > abs(A1 - A2). 
     
 similar_size([W1,H1],[W2,H2]):-
@@ -85,5 +87,10 @@ similar_size([W1,H1],[W2,H2]):-
     
 area(W,H,A):- A is W * H.
 
+shape_areas([]).
+shape_areas([shape([_,_,_,W,H])|T]):-
+    area(W,H,A),
+    writeln(A),
+    shape_areas(T).
 
 
