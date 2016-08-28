@@ -35,5 +35,6 @@
 
 # Folders
 metagol/
+results/
 # do not ignore
 !libs/

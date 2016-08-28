@@ -288,23 +288,16 @@ PREDICATE(resize_seq, 4) {
     
     int blur_size = (int) A2;
     vector<int> target_sz = list2vec<int>(A3, 2);
-//    cout << target_sz[0] << ", " << target_sz[1]<< endl;
     
     int ddepth = CV_64F;
 
     for(vector<Mat>::iterator src = seq->begin(); src != seq->end(); src++){    
-        Mat *blurred = new Mat(src->clone());
-        Mat *dst = new Mat(target_sz[0], target_sz[1], ddepth);
-        
-//        cout << "BLURRING..." << flush;
-        blur_image(&(*src), blur_size, blurred);
-//        cout << " done \nRESIZING..." << flush;
-        resize(*blurred, *dst, dst->size(), 0, 0, CV_INTER_AREA);
-//        cout << " done" << endl;
-//        cout << "src: " << src->rows << ", " << src->cols;
-//        cout << ", mat: " << blurred->rows << ", " << blurred->cols << endl;
-        
-        resized_seq->push_back(dst);
+        Mat *resized = new Mat(target_sz[0], target_sz[1], ddepth);
+        resize(*src, *resized, resized->size(), 0, 0, CV_INTER_AREA);
+
+        Mat *blurred = new Mat(resized->clone());
+        blur_image(resized, blur_size, blurred);
+        resized_seq->push_back(blurred);
     }
 
     string add_resized = ptr2str(resized_seq);

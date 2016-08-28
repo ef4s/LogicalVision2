@@ -40,7 +40,8 @@ test_video_source(FILE,BLUR,THRESHOLD,NSAMPLES):-
     release_imgseq_pointer(Dir_seq_add).
     
 new_f_name(Img_File,Results_File):-
-    file_name_extension(F_name_1,_,Img_File),
+    file_name_extension(F_name_0,_,Img_File),
+    string_concat('results/',F_name_0,F_name_1),
     string_concat(F_name_1,'_results_',F_name_2),
     random(1,1000000000,E),
     string_concat(F_name_2,E,F_name_3),
@@ -143,8 +144,8 @@ find_n_point_samples(N,Bounds,Z,Threshold,Mag_seq_add,Dir_seq_add,Samples):-
     M is N * 5,
     find_n_point_samples_inner(N,M,Bounds,Z,Threshold,Mag_seq_add,Dir_seq_add,Samples).
     
-find_n_point_samples_inner(N,_,_,_,_,_,_,[]):-N =< 0, writeln("Found points").
-find_n_point_samples_inner(_,M,_,_,_,_,_,[]):-M =< 0, writeln("Gave up").
+find_n_point_samples_inner(N,_,_,_,_,_,_,[]):-N =< 0.
+find_n_point_samples_inner(_,M,_,_,_,_,_,[]):-M =< 0.
 find_n_point_samples_inner(N,M,Bounds,Z,Threshold,Mag_seq_add,Dir_seq_add,Samples):-
     M2 is M - 1,
     (random_line_sample(Bounds,Z,Threshold,Mag_seq_add,Dir_seq_add,P1) ->    

@@ -217,7 +217,7 @@ vector<vector<double>> calc_distances(const vector<Point2f> &points, const vecto
 }
 
 vector<int> single_link_cluster(const vector<Point2f> &points, const int n_clusters){
-    double min_distance = 5;
+    double min_distance = 10;
     int n_points = points.size();
 
     vector<vector<int>> links;
