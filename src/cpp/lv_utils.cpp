@@ -160,16 +160,16 @@ void blur_image(Mat *src, int step_size, Mat *blurred){
     GaussianBlur(*src, *blurred, Size(step_size,step_size), 0, 0, BORDER_DEFAULT);
 }
 
-double sq_euclidian_distance(Point p1, Point p2){
+double sq_euclidian_distance(const Point &p1, const Point &p2){
     return pow(p1.x - p2.x, 2) + pow(p1.y - p2.y, 2);    
 }
 
-double euclidian_distance(Point p1, Point p2){
+double euclidian_distance(const Point &p1, const Point &p2){
     return norm(p1 - p2);
 //    return sqrt(sq_euclidian_distance(p1, p2));
 }
 
-vector<Point2f> links_to_points(const vector<Point2f> points,const vector<int> links){
+vector<Point2f> links_to_points(const vector<Point2f> &points, const vector<int> &links){
     vector<Point2f> p;
     for(int l : links){
         p.push_back(points[l]);
@@ -178,7 +178,7 @@ vector<Point2f> links_to_points(const vector<Point2f> points,const vector<int> l
     return p;
 }
 
-Point2f mean_links(const vector<Point2f> points, const vector<int> links){
+Point2f mean_links(const vector<Point2f> &points, const vector<int> &links){
     
     vector<Point2f> pts = links_to_points(points, links);
     vector<Point2f> m1;
@@ -189,7 +189,7 @@ Point2f mean_links(const vector<Point2f> points, const vector<int> links){
 }
 
 
-vector<vector<double>> calc_distances(const vector<Point2f> points, const vector<vector<int>> links){
+vector<vector<double>> calc_distances(const vector<Point2f> &points, const vector<vector<int>> &links){
     vector<vector<double>> distances;
     for(int i = 1; i < ((int)links.size()); i++){
 //            Point2f p1 = mean_links(points, links[i]);
@@ -222,7 +222,8 @@ vector<vector<double>> calc_distances(const vector<Point2f> points, const vector
     return distances;  
 }
 
-vector<int> single_link_cluster(const vector<Point2f> points, const int n_clusters){
+vector<int> single_link_cluster(const vector<Point2f> &points, const int n_clusters){
+    double min_distance = 5;
     int n_points = points.size();
 
     vector<vector<int>> links;
@@ -235,23 +236,44 @@ vector<int> single_link_cluster(const vector<Point2f> points, const int n_cluste
     while(((int)links.size()) > n_clusters){
         //calc distances
         vector<vector<double>> distances = calc_distances(points,links);
-    
-        //find lowest element pair
-        int p1 = distances[0][1];
-        int p2 = distances[0][2];
         
-        //add the link to the list of links
-        vector<int> p1_links = links[p1];
-        vector<int> p2_links = links[p2];
+        double dist = distances[0][0];
+        vector<int> pts;
                 
-        vector<int> merged_links;
-        merged_links.reserve(p1_links.size() + p2_links.size()); 
-        merged_links.insert(merged_links.end(), p1_links.begin(), p1_links.end() );
-        merged_links.insert(merged_links.end(), p2_links.begin(), p2_links.end() );
+        for(int i = 0; i < ((int)distances.size()); i++){
+            if(distances[i][0] <= dist || 
+                distances[i][0] <= min_distance){
+                int p1 = distances[i][1];
+                int p2 = distances[i][2];
+                
+                // If the points have not already been linked
+                if(find(pts.begin(), pts.end(), p1) == pts.end() &&
+                   find(pts.begin(), pts.end(), p2) == pts.end()){
+                    //find lowest element pair
+                    pts.push_back(p1);
+                    pts.push_back(p2);
+                    
+                    //add the link to the list of links
+                    vector<int> p1_links = links[p1];
+                    vector<int> p2_links = links[p2];
+                            
+                    vector<int> merged_links;
+                    merged_links.reserve(p1_links.size() + p2_links.size()); 
+                    merged_links.insert(merged_links.end(), p1_links.begin(), p1_links.end() );
+                    merged_links.insert(merged_links.end(), p2_links.begin(), p2_links.end() );
+                    
+                    links.push_back(merged_links);
+                }
+                
+            }
+        }
+        
+        // Remove the points that we've just processed
+        sort(pts.begin(), pts.end(), greater<int>());
+        for(int p : pts){
+            links.erase(links.begin() + p);
+        }
 
-        links.erase(links.begin() + p1);
-        links.erase(links.begin() + p2);
-        links.push_back(merged_links);
     }
     
     vector<int> clusters;
@@ -266,7 +288,7 @@ vector<int> single_link_cluster(const vector<Point2f> points, const int n_cluste
     return clusters;
 }
 
-double score_fit(const vector<Point2f> points, const RotatedRect rect){
+double score_fit(const vector<Point2f> &points, const RotatedRect &rect){
     Point2f t_rect_points[4]; 
     rect.points(t_rect_points);
     vector<Point2f> rect_points(begin(t_rect_points), end(t_rect_points));
@@ -280,7 +302,7 @@ double score_fit(const vector<Point2f> points, const RotatedRect rect){
     return score;//sqrt(score / (double)points.size());
 }
 
-double score_fit(const vector<vector<Point2f>> clustered_points, const vector<RotatedRect> rects){
+double score_fit(const vector<vector<Point2f>> &clustered_points, const vector<RotatedRect> &rects){
     double n_rects = rects.size();
     double score = 0;
     double dist = 1;
@@ -316,7 +338,7 @@ double score_fit(const vector<vector<Point2f>> clustered_points, const vector<Ro
     return score / dist;
 }
 
-RotatedRect shift_edge(const RotatedRect r, const int e, const int inv_epsilon){
+RotatedRect shift_edge(const RotatedRect &r, const int e, const int inv_epsilon){
     Point2f t_rect_points[4]; 
     r.points(t_rect_points);
 
@@ -342,7 +364,7 @@ RotatedRect shift_edge(const RotatedRect r, const int e, const int inv_epsilon){
     return rect;
 }
 
-RotatedRect optimise_side(const RotatedRect r, const vector<Point2f> points, const int side){
+RotatedRect optimise_side(const RotatedRect &r, const vector<Point2f> &points, const int side){
     RotatedRect new_r(r.center,r.size, r.angle);
     RotatedRect old_r = new_r;
     double old_score = score_fit(points, new_r);
@@ -364,7 +386,7 @@ RotatedRect optimise_side(const RotatedRect r, const vector<Point2f> points, con
     return old_r;
 }
 
-void improve_fit_rectangles(const vector<vector<Point2f>> clustered_points, vector<RotatedRect> &rects){
+void improve_fit_rectangles(const vector<vector<Point2f>> &clustered_points, vector<RotatedRect> &rects){
     for(int cluster = 0; cluster < ((int)rects.size()); cluster++){
         //Optimise left
         rects[cluster] = optimise_side(rects[cluster], clustered_points[cluster], 0);
@@ -380,7 +402,7 @@ void improve_fit_rectangles(const vector<vector<Point2f>> clustered_points, vect
     }
 }
 
-void best_fit_rectangle(const vector<Point2f> points, vector<RotatedRect> &best_rects, vector<vector<Point2f>> &best_clustered_points){
+void best_fit_rectangle(const vector<Point2f> &points, vector<RotatedRect> &best_rects, vector<vector<Point2f>> &best_clustered_points){
     
     int n_points = (int)points.size();
     
