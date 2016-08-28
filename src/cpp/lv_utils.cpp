@@ -192,14 +192,12 @@ Point2f mean_links(const vector<Point2f> &points, const vector<int> &links){
 vector<vector<double>> calc_distances(const vector<Point2f> &points, const vector<vector<int>> &links){
     vector<vector<double>> distances;
     for(int i = 1; i < ((int)links.size()); i++){
-//            Point2f p1 = mean_links(points, links[i]);
         vector<Point2f> hi;
         convexHull(links_to_points(points, links[i]), hi);
         
         for(int j = 0; j < i; j++){
             //fit convex hull
             double min = abs(pointPolygonTest(hi, points[links[j][0]], true));
-            
             for(int k = 1; k < ((int)links[j].size()); k++){
                 double dist = abs(pointPolygonTest(hi, points[links[j][k]], true));
                 if(dist < min){
@@ -209,10 +207,6 @@ vector<vector<double>> calc_distances(const vector<Point2f> &points, const vecto
             
             vector<double> t = {min, (double)i, (double)j};
         
-//            Calculate the distance from the means
-//            Point2f p2 = mean_links(points, links[j]);
-//            vector<double> t = {sq_euclidian_distance(p1, p2), (double)i, (double)j};
-
             distances.push_back(t);
         }
     }
@@ -243,12 +237,14 @@ vector<int> single_link_cluster(const vector<Point2f> &points, const int n_clust
         for(int i = 0; i < ((int)distances.size()); i++){
             if(distances[i][0] <= dist || 
                 distances[i][0] <= min_distance){
+                
                 int p1 = distances[i][1];
                 int p2 = distances[i][2];
                 
                 // If the points have not already been linked
                 if(find(pts.begin(), pts.end(), p1) == pts.end() &&
                    find(pts.begin(), pts.end(), p2) == pts.end()){
+                   
                     //find lowest element pair
                     pts.push_back(p1);
                     pts.push_back(p2);
@@ -410,25 +406,35 @@ void best_fit_rectangle(const vector<Point2f> &points, vector<RotatedRect> &best
 
     double best_fit = numeric_limits<double>::max();
     
-//    cout << "\tFinding rectangles..." << flush;
+//    cout << "\tFinding rectangles..." << endl;
     //Lets look for no more than 5 objects
-    for(int n_clusters = 4; n_clusters >= 1; n_clusters--){
+    for(int n_clusters = 1; n_clusters <= 5; n_clusters++){
+    
+//        cout << "\tClustering..." << flush;
         //Classify Points
         vector<int> cluster_idx = single_link_cluster(points, n_clusters);
+//        cout << " done" << endl;
         
         //Sort points
+//        cout << "\tSorting points..." << flush;
         vector<vector<Point2f>> c_points;
-        c_points.resize(((int)cluster_idx.size()));        
+        c_points.resize(n_clusters);        
         for(int i = 0; i < n_points; i++){
             c_points[cluster_idx[i]].push_back(points[i]);
         }
+//        cout << " done" << endl;
+
 
         //Fit rectangles
+//        cout << "\tFitting Rectangles..." << flush;
         vector<RotatedRect> rects;
-        rects.resize(((int)cluster_idx.size()));
-        for(int cluster = 0; cluster < ((int)cluster_idx.size()); cluster++){
-            rects[cluster] = minAreaRect(c_points[cluster]);
+        rects.resize(n_clusters);
+        for(int cluster = 0; cluster < n_clusters; cluster++){
+            if(c_points[cluster].size() != 0){
+                rects[cluster] = minAreaRect(c_points[cluster]);
+            }
         }
+//        cout << " done" << endl;
         
         //Score fit
         double score = score_fit(c_points, rects);
