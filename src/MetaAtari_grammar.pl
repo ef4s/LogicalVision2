@@ -14,15 +14,16 @@ metarule([P,Q],([P,A,B]:-[[Q,A,C],[P,C,B]])). % tail rec
 
 % Evaluate accuracy of learned rules
 
-
 a :-
-  Pos = [
-    t(['l','l','l','d','r','r','r'],[]),
-    t(['l','l','l','d','r','r','r','d','l','l','l','d','r','r','r'],[]),
-    t(['r','r','r','d','l','l','l','d','r','r','r'],[])
-  ],
-  
+  pos(Pos),  
   learn(Pos,[],H),
   pprint(H).
 
+b:-
+    ans(Pos),
+    findall(X,(member(Pos,X),t(X)),Y),
+    length(Y,L1),
+    length(Pos,L2),
+    write(L1),write(" of "),write(L2).
+    
 

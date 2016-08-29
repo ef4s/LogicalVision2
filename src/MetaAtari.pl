@@ -3,28 +3,37 @@ named_shape(alien_rectangle,[0,80,160]).
 
 process_file:-
     list_of_moves(alien_rectangle,L),
-    length(L,A),
-    N_buckets is 10,
-    Frac is integer(A / N_buckets),
-    n_buckets(Frac,N_buckets,Buckets),
-    writeln(Buckets).
+    open("strings.txt",append,Stream),
+    writeln(Stream,l).
 
-write_buckets([],_).
-write_buckets([B|T],List,InStream,OutStream):-
-    div(List,B,L1,L2),
-    write(InStream,'t('), write(InStream,L1), write(InStream,L1)
-    
 
-n_buckets(_,0,[]).
-n_buckets(Frac,N,Buckets):-
-    A is N * F,
-    N2 is N - 1,    
-    n_buckets(Frac,N2,B2),
-    append(B2,[A],Buckets).
+%write_buckets([B|T],List,[InStream|U],[OutStream|V]):-
+%    write(InStream,'['),
+%    div(List,B,L1,L2),
+%    write(InStream,'t('), write(InStream,L1), writeln(InStream,",[])"),
+%    write(OutStream,'t('), write(OutStream,L2), writeln(OutStream,"),[]"),
+%    write_buckets_n(T,List,U,V).    
+%    
+%write_buckets_n([],_,[InStream],[OutStream]):-
+%    writeln(InStream,"]"),
+%    writeln(OutStream,"]").
+%    
+%write_buckets_n([B|T],List,[InStream|U],[OutStream|V]):-
+%    div(List,B,L1,L2),
+%    write(InStream,',t('), write(InStream,L1), writeln(InStream,")"),
+%    write(OutStream,'t('), write(OutStream,L2), writeln(OutStream,"),[]"),
+%    write_buckets_n(T,List,U,V).    
 
-div(L, N, A, B) :-
-    append(A, B, L),
-    length(A, N).
+%n_buckets(_,0,[]).
+%n_buckets(Frac,N,Buckets):-
+%    A is N * F,
+%    N2 is N - 1,    
+%    n_buckets(Frac,N2,B2),
+%    append(B2,[A],Buckets).
+
+%div(L, N, A, B) :-
+%    append(A, B, L),
+%    length(A, N).
 
 list_of_moves(Shape_name,List):-
     findall(Z,(frame(N,X),named_shape(Shape_name,Y),find_shape(X,Y,Z),writeln(N)),A),
