@@ -51,7 +51,7 @@ process_video(NSAMPLES,[X,Y,Z],Threshold,Img_seq_add,Resized_seq_add,Mag_seq_add
     writeln("STARTING PROCESSING"),
     process_video(NSAMPLES,[X,Y,Z],0,Threshold,Img_seq_add,Resized_seq_add,Mag_seq_add,Dir_seq_add,Stream).
 
-process_video(_,[_,_,Z],Z,_,_,_,_,_):-writeln("Processing done!").
+process_video(_,[_,_,Z],Z,_,_,_,_,_,_).
 
 process_video(NSAMPLES,[X,Y,Z],IDX,Threshold,Img_seq_add,Resized_seq_add,Mag_seq_add,Dir_seq_add,Stream):-
     find_n_point_samples(NSAMPLES,[X,Y],IDX,Threshold,Mag_seq_add,Dir_seq_add,Points),

@@ -1,72 +1,69 @@
-%% Learning object motion strategies
-:- use_module('../metagol/metagol').
-:- use_module(library(charsio)).
-:- use_module(library(lists)).
 
-%% METAGOL SETTINGS
-metagol:functional. % force functional solution
+named_shape(alien_rectangle,[0,80,160]).
 
-%% CUSTOM FUNCTIONAL CHECK
-func_test(Atom,PS,G):-
-  Atom = [P,A,B],
-  Actual = [P,A,Z],
-  \+ (metagol:prove_deduce([Actual],PS,G),Z \= B).
+process_file:-
+    list_of_moves(alien_rectangle,L),
+    length(L,A),
+    N_buckets is 10,
+    Frac is integer(A / N_buckets),
+    n_buckets(Frac,N_buckets,Buckets),
+    writeln(Buckets).
 
-%% METARULES
-%metarule([P,Q],([P,A]:-[[Q,A]])).
-metarule([P,Q],([P,A]:-[[Q,A,_]])).
-%metarule([P,Q,R],([P,A]:-[[Q,C],[R,A,C]])).
-%metarule([P,Q,R],([P,A]:-[[Q,A,C],[R,C,B]])).
+write_buckets([],_).
+write_buckets([B|T],List,InStream,OutStream):-
+    div(List,B,L1,L2),
+    write(InStream,'t('), write(InStream,L1), write(InStream,L1)
+    
 
-%metarule([P,Q],([P,A,B]:-[[Q,A]])).
-%metarule([P,Q],([P,A,B]:-[[Q,A,B]])).
-%metarule([P,Q,B],([P,A,B]:-[[Q,A,B]])).
-%metarule([P,Q,A],([P,A,B]:-[[Q,A,B]])).
-%metarule([P,Q,A,B],([P,A,B]:-[[Q,A,B]])).
+n_buckets(_,0,[]).
+n_buckets(Frac,N,Buckets):-
+    A is N * F,
+    N2 is N - 1,    
+    n_buckets(Frac,N2,B2),
+    append(B2,[A],Buckets).
 
-% Chain Rule
-%metarule([P,Q,R],([P,A,B]:-[[Q,C],[R,A,C]])).
-%metarule([P,Q,R],([P,A,B]:-[[Q,A],[R,A,C]])).
-%metarule([P,Q,R],([P,A,B]:-[[Q,A,C],[R,C,B]])).
-%metarule([P,Q,R],([P,A,B]:-[[Q,A,C],[R,B,C]])).
-%metarule([P,Q,R,B],([P,A,B]:-[[Q,A,C],[R,C,B]])).
-%metarule([P,Q,R,A],([P,A,B]:-[[Q,A,C],[R,C,B]])).
-%metarule([P,Q,R,A,B],([P,A,B]:-[[Q,A,C],[R,C,B]])).
+div(L, N, A, B) :-
+    append(A, B, L),
+    length(A, N).
 
-/*
-% Tail Recursion
-metarule([P,Q],([P,A,B]:-[[Q,A,C],@term_gt(A,C),[P,C,B],@term_gt(C,B)])). 
-metarule([P,Q,A],([P,A,B]:-[[Q,A,C],@term_gt(A,C),[P,C,B],@term_gt(C,B)])). 
-metarule([P,Q,B],([P,A,B]:-[[Q,A,C],@term_gt(A,C),[P,C,B],@term_gt(C,B)])). 
-metarule([P,Q,A,B],([P,A,B]:-[[Q,A,C],@term_gt(A,C),[P,C,B],@term_gt(C,B)])). 
-%metarule([P,Q,A,B],([P,[A|B]]:-[[Q,A,C],@term_gt(A,C),[P,C,B],@term_gt(C,B)])). 
-*/
+list_of_moves(Shape_name,List):-
+    findall(Z,(frame(N,X),named_shape(Shape_name,Y),find_shape(X,Y,Z),writeln(N)),A),
+    write("List length: "),length(A,L), write(L),nl,
+    eat_shapes(A,List).
 
-% EXTRACT OUT SIMILAR SHAPES
-    % WHAT SIZE IS SPACE INVADERS?
+eat_shapes([_],[]).
+eat_shapes([H1,H2|T],List):-
+    find_move(H1,H2,M),
+    eat_shapes([H2|T],L2),
+    writeln(M),
+    append(L2,[M],List).
 
-% GIVE THEM TO METAGOL
-
-% SEE WHAT HAPPENS?
-
-named_shape(alien_rectangle,[0,160,400]).
-%a :-
-%  Pos = [t(Input,S)],
-%  Neg = [],
-%  learn(Pos,Neg,H),
-%  pprint(H).
+find_move(S1,S2,'l'):-move_left(S1,S2).
+find_move(S1,S2,'r'):-move_right(S1,S2).
+find_move(S1,S2,'u'):-move_up(S1,S2).
+find_move(S1,S2,'d'):-move_down(S1,S2).
+find_move(_,_,'n').
 
 move_left(shape([X1,_,_,_,_]),shape([X2,_,_,_,_])):-
-    X1 > X2.
+    X1 > X2,
+    Z is X1 - X2, 
+    abs(Z) > 10.
 
 move_right(shape([X1,_,_,_,_]),shape([X2,_,_,_,_])):-
-    X1 < X2.
+    X1 < X2,
+    Z is X1 - X2, 
+    abs(Z) > 10.
 
 move_up(shape([_,Y1,_,_,_]),shape([_,Y2,_,_,_])):-
-    Y1 > Y2.
+    Y1 > Y2,
+    Z is Y1 - Y2,
+    abs(Z) > 10.
 
 move_down(shape([_,Y1,_,_,_]),shape([_,Y2,_,_,_])):-
-    Y1 < Y2.
+    Y1 < Y2,
+    Z is Y1 - Y2,
+    abs(Z) > 10.
+    
 
 find_shape([H|T],Shape,New_Shape):-
     (similar_shape(H,Shape)->New_Shape = H;find_shape(T,Shape,New_Shape)).   
@@ -90,5 +87,6 @@ shape_areas([shape([_,_,_,W,H])|T]):-
     area(W,H,A),
     writeln(A),
     shape_areas(T).
+
 
 
