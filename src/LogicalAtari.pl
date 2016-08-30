@@ -18,7 +18,7 @@ test_video_source(FILE,BLUR,THRESHOLD,NSAMPLES):-
     
     writeln([MaxX,MaxY,MaxZ]),
     
-    resize_seq(Diff_seq_add,BLUR,[210,320],Resized_seq_add),        
+    resize_seq(Diff_seq_add,BLUR,[MaxX,MaxY],Resized_seq_add),        
     release_imgseq_pointer(Diff_seq_add),    
 
     gradient_seq(Resized_seq_add, Mag_seq_add, Dir_seq_add),
@@ -32,7 +32,8 @@ test_video_source(FILE,BLUR,THRESHOLD,NSAMPLES):-
         
     open(Results_File,write,Stream), 
 
-    process_video(NSAMPLES,[MaxY2,MaxX2,MaxZ2],THRESHOLD,Img_seq_add,Resized_seq_add,Mag_seq_add,Dir_seq_add,Stream),
+%    process_video(NSAMPLES,[MaxY2,MaxX2,MaxZ2],129,THRESHOLD,Img_seq_add,Resized_seq_add,Mag_seq_add,Dir_seq_add,Stream),
+    process_video(NSAMPLES,[MaxX2,MaxY2,MaxZ2],THRESHOLD,Img_seq_add,Resized_seq_add,Mag_seq_add,Dir_seq_add,Stream),
 
     close(Stream),
     release_imgseq_pointer(Resized_seq_add),
@@ -55,9 +56,9 @@ process_video(_,[_,_,Z],Z,_,_,_,_,_,_).
 
 process_video(NSAMPLES,[X,Y,Z],IDX,Threshold,Img_seq_add,Resized_seq_add,Mag_seq_add,Dir_seq_add,Stream):-
     find_n_point_samples(NSAMPLES,[X,Y],IDX,Threshold,Mag_seq_add,Dir_seq_add,Points),
-    find_rectangles_from_src(Resized_seq_add, IDX, Points, Rects),
+%    find_rectangles_from_src(Resized_seq_add, IDX, Points, Rects),
 %    show_seq_img_ptr(Resized_seq_add,IDX),
-%    find_rectangles(Points,Rects),
+    find_rectangles(Points,Rects),
     write(Stream,"frame("),write(Stream,IDX),write(Stream,",["),write_shapes(Stream,Rects),writeln(Stream,"])."),
     IDX2 is IDX + 1,
     write("Processing: "),write(IDX), write(" of "), write(Z), write(". "), format('~2f%',100 * IDX / Z),nl,

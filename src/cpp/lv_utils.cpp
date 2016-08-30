@@ -228,11 +228,12 @@ vector<int> single_link_cluster(const vector<Point2f> &points, const int n_clust
         links.push_back(l);
     }
     
-    while(((int)links.size()) > n_clusters){
+    vector<vector<double>> distances = calc_distances(points,links);
+    double dist = distances[0][0];
+    
+    while( min_distance > dist || 
+        ((int)links.size()) > n_clusters){
         //calc distances
-        vector<vector<double>> distances = calc_distances(points,links);
-        
-        double dist = distances[0][0];
         vector<int> pts;
                 
         for(int i = 0; i < ((int)distances.size()); i++){
@@ -264,13 +265,19 @@ vector<int> single_link_cluster(const vector<Point2f> &points, const int n_clust
                 
             }
         }
-        
         // Remove the points that we've just processed
         sort(pts.begin(), pts.end(), greater<int>());
         for(int p : pts){
             links.erase(links.begin() + p);
         }
-
+        
+        distances = calc_distances(points,links);
+        
+        if(links.size() <= 1){
+            dist = min_distance;
+        }else{
+            dist = distances[0][0];
+        }
     }
     
     vector<int> clusters;
