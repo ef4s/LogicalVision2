@@ -448,6 +448,33 @@ PREDICATE(show_seq_img, 2) {
     return TRUE;
 }
 
+/* show_seq_img_ptr(SEQ, IDX)
+ * get an image (IMG) from image sequence (SEQ), starting from 0
+ */
+PREDICATE(show_seq_img_ptr, 2) {
+    char *p1 = (char*) A1;
+    const string seq_add(p1);
+    vector<Mat*> *src = str2ptr<vector<Mat*>>(seq_add);
+    
+    term_t t2 = A2.ref;
+    int p2;
+    if(!PL_get_integer(t2, &p2)){
+        return FALSE;
+    }
+    
+    Mat *img = src->at(p2);
+    
+    /// Show in a window
+    namedWindow( "IMG", WINDOW_NORMAL );
+    imshow( "IMG", *img );
+    waitKey(0);
+    destroyWindow("IMG");
+
+
+    return TRUE;
+}
+
+
 
 /* close_window(WINDOW_NAME)
  * close a visualizing window

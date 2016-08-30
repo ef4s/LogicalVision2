@@ -197,9 +197,10 @@ vector<vector<double>> calc_distances(const vector<Point2f> &points, const vecto
         
         for(int j = 0; j < i; j++){
             //fit convex hull
-            double min = abs(pointPolygonTest(hi, points[links[j][0]], true));
+//            double min = abs(pointPolygonTest(hi, points[links[j][0]], true));
+            double min = -pointPolygonTest(hi, points[links[j][0]], true);
             for(int k = 1; k < ((int)links[j].size()); k++){
-                double dist = abs(pointPolygonTest(hi, points[links[j][k]], true));
+                double dist = -pointPolygonTest(hi, points[links[j][k]], true);
                 if(dist < min){
                     min = dist;
                 }

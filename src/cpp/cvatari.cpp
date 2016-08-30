@@ -297,6 +297,8 @@ PREDICATE(resize_seq, 4) {
 
         Mat *blurred = new Mat(resized->clone());
         blur_image(resized, blur_size, blurred);
+
+//        Mat *blurred = new Mat(src->clone());
         resized_seq->push_back(blurred);
     }
 
