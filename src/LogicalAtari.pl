@@ -38,7 +38,8 @@ test_video_source(FILE,BLUR,THRESHOLD,NSAMPLES):-
     close(Stream),
     release_imgseq_pointer(Resized_seq_add),
     release_imgseq_pointer(Mag_seq_add),
-    release_imgseq_pointer(Dir_seq_add).
+    release_imgseq_pointer(Dir_seq_add),
+    halt.
     
 new_f_name(Img_File,Results_File):-
     file_name_extension(F_name_0,_,Img_File),
