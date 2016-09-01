@@ -218,7 +218,7 @@ vector<vector<double>> calc_distances(const vector<Point2f> &points, const vecto
 }
 
 vector<int> single_link_cluster(const vector<Point2f> &points, const int n_clusters){
-    double min_distance = 10;
+    double min_distance = 2;
     int n_points = points.size();
     
     vector<vector<int>> links;
@@ -411,7 +411,7 @@ void improve_fit_rectangles(const vector<vector<Point2f>> &clustered_points, vec
     }
 }
 
-void best_fit_rectangle(const vector<Point2f> &points, vector<RotatedRect> &best_rects, vector<vector<Point2f>> &best_clustered_points){
+void best_fit_rectangle(const vector<Point2f> &points, int max_clusters, vector<RotatedRect> &best_rects, vector<vector<Point2f>> &best_clustered_points){
     
     int n_points = (int)points.size();
     
@@ -421,7 +421,7 @@ void best_fit_rectangle(const vector<Point2f> &points, vector<RotatedRect> &best
     
 //    cout << "\tFinding rectangles..." << endl;
     //Lets look for no more than 5 objects
-    for(int n_clusters = 1; n_clusters <= 5; n_clusters++){
+    for(int n_clusters = 1; n_clusters <= max_clusters; n_clusters++){
     
 //        cout << "\tClustering..." << flush;
         //Classify Points

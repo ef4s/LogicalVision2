@@ -5,21 +5,23 @@
 	
 mindist(5).
 
-test_video_source(FILE,BLUR,THRESHOLD,NSAMPLES):-
+test_video_source(FILE,BLUR,THRESHOLD,NSAMPLES,MAX_RECTANGLES):-
     format(atom(Vid_file), 'data/space_invaders/~w', [FILE]),
     load_video(Vid_file, Vid_add),    
 
     video2imgseq(Vid_add, Img_seq_add),
     release_video(Vid_add),
 
-    diff_seq(Img_seq_add, Diff_seq_add),
-    imgseq_bounds(Diff_seq_add,[MaxX,MaxY,MaxZ]),
+%    diff_seq(Img_seq_add, Diff_seq_add),
+%    imgseq_bounds(Diff_seq_add,[MaxX,MaxY,MaxZ]),
 %    release_imgseq(Img_seq_add),  
     
+    imgseq_bounds(Img_seq_add,[MaxX,MaxY,MaxZ]),
     writeln([MaxX,MaxY,MaxZ]),
     
-    resize_seq(Diff_seq_add,BLUR,[MaxX,MaxY],Resized_seq_add),        
-    release_imgseq_pointer(Diff_seq_add),    
+%    resize_seq(Diff_seq_add,BLUR,[MaxX,MaxY],Resized_seq_add),
+    resize_seq(Img_seq_add,BLUR,[MaxX,MaxY],Resized_seq_add),                
+%    release_imgseq_pointer(Diff_seq_add),    
 
     gradient_seq(Resized_seq_add, Mag_seq_add, Dir_seq_add),
     
@@ -33,7 +35,7 @@ test_video_source(FILE,BLUR,THRESHOLD,NSAMPLES):-
     open(Results_File,write,Stream), 
 
 %    process_video(NSAMPLES,[MaxY2,MaxX2,MaxZ2],129,THRESHOLD,Img_seq_add,Resized_seq_add,Mag_seq_add,Dir_seq_add,Stream),
-    process_video(NSAMPLES,[MaxX2,MaxY2,MaxZ2],THRESHOLD,Img_seq_add,Resized_seq_add,Mag_seq_add,Dir_seq_add,Stream),
+    process_video(MAX_RECTANGLES,NSAMPLES,[MaxY2,MaxX2,MaxZ2],THRESHOLD,Img_seq_add,Resized_seq_add,Mag_seq_add,Dir_seq_add,Stream),
 
     close(Stream),
     release_imgseq_pointer(Resized_seq_add),
@@ -49,21 +51,21 @@ new_f_name(Img_File,Results_File):-
     string_concat(F_name_2,E,F_name_3),
     string_concat(F_name_3,'.pl',Results_File).
 
-process_video(NSAMPLES,[X,Y,Z],Threshold,Img_seq_add,Resized_seq_add,Mag_seq_add,Dir_seq_add,Stream):-
+process_video(MAX_RECTANGLES,NSAMPLES,[X,Y,Z],Threshold,Img_seq_add,Resized_seq_add,Mag_seq_add,Dir_seq_add,Stream):-
     writeln("STARTING PROCESSING"),
-    process_video(NSAMPLES,[X,Y,Z],0,Threshold,Img_seq_add,Resized_seq_add,Mag_seq_add,Dir_seq_add,Stream).
+    process_video(MAX_RECTANGLES,NSAMPLES,[X,Y,Z],0,Threshold,Img_seq_add,Resized_seq_add,Mag_seq_add,Dir_seq_add,Stream).
 
-process_video(_,[_,_,Z],Z,_,_,_,_,_,_).
+process_video(_,_,[_,_,Z],Z,_,_,_,_,_,_).
 
-process_video(NSAMPLES,[X,Y,Z],IDX,Threshold,Img_seq_add,Resized_seq_add,Mag_seq_add,Dir_seq_add,Stream):-
+process_video(MAX_RECTANGLES,NSAMPLES,[X,Y,Z],IDX,Threshold,Img_seq_add,Resized_seq_add,Mag_seq_add,Dir_seq_add,Stream):-
     find_n_point_samples(NSAMPLES,[X,Y],IDX,Threshold,Mag_seq_add,Dir_seq_add,Points),
-%    find_rectangles_from_src(Resized_seq_add, IDX, Points, Rects),
+%    find_rectangles_from_src(Resized_seq_add, IDX, Points, MAX_RECTANGLES, Rects),
 %    show_seq_img_ptr(Resized_seq_add,IDX),
-    find_rectangles(Points,Rects),
+    find_rectangles(Points,MAX_RECTANGLES,Rects),
     write(Stream,"frame("),write(Stream,IDX),write(Stream,",["),write_shapes(Stream,Rects),writeln(Stream,"])."),
     IDX2 is IDX + 1,
     write("Processing: "),write(IDX), write(" of "), write(Z), write(". "), format('~2f%',100 * IDX / Z),nl,
-    process_video(NSAMPLES,[X,Y,Z],IDX2,Threshold,Img_seq_add,Resized_seq_add,Mag_seq_add,Dir_seq_add,Stream).
+    process_video(MAX_RECTANGLES,NSAMPLES,[X,Y,Z],IDX2,Threshold,Img_seq_add,Resized_seq_add,Mag_seq_add,Dir_seq_add,Stream).
 
 write_shapes(_,[]).
 

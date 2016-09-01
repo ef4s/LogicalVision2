@@ -72,15 +72,35 @@ move_down(shape([_,Y1,_,_,_]),shape([_,Y2,_,_,_])):-
     Y1 < Y2,
     Z is Y1 - Y2,
     abs(Z) > 10.
-    
 
-find_shape([H|T],Shape,New_Shape):-
-    (similar_shape(H,Shape)->New_Shape = H;find_shape(T,Shape,New_Shape)).   
+% FIND SIMILAR SHAPES BETWEEN TWO FRAMES
+
+find_shape(List,Shape,New_Shape, New_List):-
+    find_shape(List,[],Shape, New_Shape, New_List).
     
-similar_shape(shape([_,_,A1,W1,H1]),[A2,W2,H2]):-
+find_shape([H|T],S,Shape,New_Shape,New_List):-
+    (similar_shape(H,Shape)->
+        New_Shape = H,
+        append(S,T,New_List);
+        append(S,[H],S2),
+        find_shape(T,S2,Shape,New_Shape,New_List)).   
+
+% TELL ME SOMETHING ABOUT HOW THE SHAPE CHANGED
+
+
+    
+similar_shape(shape([X1,Y1,A1,W1,H1]),shape([X2,Y2,A2,W2,H2])):-
+    similar_position([X1,Y1],[X2,Y2]),
     similar_angle(A1,A2),
     similar_size([W1,H1],[W2,H2]).        
-    
+
+% SIMILAR SHAPE IF NEAR BY AND SAME SIZE
+similar_position([X1,Y1],[X2,Y2]):-
+    X is (X1 - X2)^2,
+    Y is (Y1 - Y2)^2,
+    sqrt(X + Y, C),
+    C < 5.
+        
 similar_angle(A1,A2):-
     30 > abs(A1 - A2). 
     
@@ -96,6 +116,14 @@ shape_areas([shape([_,_,_,W,H])|T]):-
     area(W,H,A),
     writeln(A),
     shape_areas(T).
+
+shape_diff([shape([X1,Y1,A1,W1,H1]),shape([X2,Y2,A2,W2,H2])],[Xd,Yd,Ad,Wd,Hd]):-
+    Xd is X1 - X2,
+    Yd is Y1 - Y2,
+    Ad is A1 - A2,
+    Wd is W1 - W2,
+    Hd is H1 - H2.
+
 
 
 

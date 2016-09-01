@@ -311,6 +311,24 @@ PREDICATE(resize_seq, 4) {
 }
 
 
+/* diff_seq(+IMGSEQ, -IMGSEQ_PTR)
+ * convert an image sequence to matrix of pointers, REMEMBER TO RELEASE IT!
+ */
+PREDICATE(img_seq2ptr, 2) {
+    char *p1 = (char*) A1;
+    const string add_seq(p1); // address
+    vector<Mat> *seq = str2ptr<vector<Mat>>(add_seq);
+    // copy image sequence
+    vector<Mat*> *newseq = new vector<Mat*>();
+    
+    for (auto it = seq->begin(); it != seq->end(); ++it) {
+        newseq->push_back(new Mat(it->clone()));
+    }
+    string add = ptr2str(newseq);
+    return A2 = PlTerm(add.c_str());
+}
+
+
 /* diff_seq(+IMGSEQ, -DIFFSEQ)
  * difference an image sequence, REMEMBER TO RELEASE IT!
  */
@@ -641,14 +659,15 @@ PREDICATE(single_link_clusters, 4){
 }
 
 
-/* find_rectangles_from_src(+IMG_SEQ, +FRAME, +POINTS, -RECTANGLE)
+/* find_rectangles_from_src(+IMG_SEQ, +FRAME, +POINTS, +MAX_CLUSTERS, -RECTANGLE)
  */
-PREDICATE(find_rectangles_from_src, 4){
+PREDICATE(find_rectangles_from_src, 5){
     char *p1 = (char*) A1;
     const string img_seq_add(p1); 
     vector<Mat*> *img_seq = str2ptr<vector<Mat*>>(img_seq_add);
     
     int frame = (int)A2;
+    int max_clusters = (int)A4;
     
     vector<Scalar> pts = point_list2vec(A3);
     vector<Point2f> points;
@@ -668,7 +687,7 @@ PREDICATE(find_rectangles_from_src, 4){
     
     cout << "Fitting rectangles..." << flush;
     
-    best_fit_rectangle(points, best_rects, best_clustered_points);
+    best_fit_rectangle(points, max_clusters, best_rects, best_clustered_points);
     
     cout << " done, number of rectangles found: " << best_rects.size() << endl;
 
@@ -702,16 +721,18 @@ PREDICATE(find_rectangles_from_src, 4){
     waitKey(0);
     destroyWindow("S-LINK");
 
-    return A4 = rectvec2list(best_rects); 
+    return A5 = rectvec2list(best_rects); 
 }
 
 
 
-/* find_rectangles(+POINTS, -RECTANGLE)
+/* find_rectangles(+POINTS, +MAX_CLUSTERS, -RECTANGLE)
  */
-PREDICATE(find_rectangles, 2){
+PREDICATE(find_rectangles, 3){
     vector<Scalar> pts = point_list2vec(A1);
     vector<Point2f> points;
+    
+    int max_clusters = (int)A2;
     
     int sample_size = pts.size();
     cout << "Number of points: " << sample_size << ". " << flush;
@@ -728,11 +749,11 @@ PREDICATE(find_rectangles, 2){
     
     cout << "Fitting rectangles..." << flush;
     
-    best_fit_rectangle(points, best_rects, best_clustered_points);
+    best_fit_rectangle(points, max_clusters, best_rects, best_clustered_points);
     
     cout << " done, number of rectangles found: " << best_rects.size() << endl;
         
-    return A2 = rectvec2list(best_rects); 
+    return A3 = rectvec2list(best_rects); 
 }
 
 
