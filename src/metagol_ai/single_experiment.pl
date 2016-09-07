@@ -1,7 +1,9 @@
 :-['metagol_ai'].
+:-['transitions'].
 :-[common].
 
 metagol:functional.
+max_time(10000). % 10 seconds
 
 prim(last_frame/1).
 prim(mv_forward/2).
@@ -43,17 +45,20 @@ b:-
     retract(last_frame((13,_,_))).
 
 e:-
+    set_rand,
     create_example(E,P),
     create_destinations(E,D),
     last(E,Last),
     assert(last_frame(Last)),   
     E = [A|_],
     last(D,B),
-    writeln(E),writeln('----'),writeln(P),writeln('----'),writeln(A),writeln('----'),writeln(B),writeln('----'),last_frame(X),writeln(last_frame(X)),
-    learn([f(A,B)],[],G),
-    writeln('----'),
+    learn([f([A],[B])],[],G),
+
     pprint(G),
-    retract(last_frame(Last)).
+    format('test(~w).',[E]),
+    
+    retract(last_frame(Last)),
+    halt.
     
 create_destinations(E,D):-
     last(E,Dest),
@@ -67,10 +72,11 @@ repeat_list(Dest,N,D):-
     append(D2,[Dest],D).
 
 create_example(E,P):- 
-    random(1,10,L),
+    random(1,5,L),
     create_pattern(L,P),
-    random(L,10,N),
-    create_examples(N,P,E).
+    random(1,5,N),
+    M is L * N,
+    create_examples(M,P,E).
 
 create_examples(N,P,E):-
     create_examples(N,P,[],E).
@@ -104,50 +110,23 @@ create_pattern(N,P):-
         )
     ),
     append([M],P2,P).
-    
-test_maxframes(F1):-
-    last_frame((Max_frames,_,_)),
-    F1 < Max_frames.
-    
+
 mv_forward((F1,Id,X/Y1),(F2,Id,X/Y2)):-
-    test_maxframes(F1),
-    mv_forward_r((F1,Id,X/Y1),(F2,Id,X/Y2)).
-    
-mv_forward_r((F1,Id,X/Y1),(F2,Id,X/Y2)):-
-    F2 is F1+1,   
-    Y2 is Y1+1.
+    mv_forward_q((F1,Id,X/Y1),(F2,Id,X/Y2)).
     
 mv_backward((F1,Id,X/Y1),(F2,Id,X/Y2)):-
-    test_maxframes(F1),
-    mv_backward_r((F1,Id,X/Y1),(F2,Id,X/Y2)).
+    mv_backward_q((F1,Id,X/Y1),(F2,Id,X/Y2)).
     
-mv_backward_r((F1,Id,X/Y1),(F2,Id,X/Y2)):-
-    F2 is F1 + 1,   
-    Y2 is Y1-1.
-  
 mv_right((F1,Id,X1/Y),(F2,Id,X2/Y)):-
-    test_maxframes(F1),
-    mv_right_r((F1,Id,X1/Y),(F2,Id,X2/Y)).
-    
-mv_right_r((F1,Id,X1/Y),(F2,Id,X2/Y)):-
-    F2 is F1 + 1,
-    X2 is X1+1.
+    mv_right_q((F1,Id,X1/Y),(F2,Id,X2/Y)).
     
 mv_left((F1,Id,X1/Y),(F2,Id,X2/Y)):-
-    test_maxframes(F1),
-    mv_left_r((F1,Id,X1/Y),(F2,Id,X2/Y)).
-
-mv_left_r((F1,Id,X1/Y),(F2,Id,X2/Y)):-
-    F2 is F1 + 1,
-    X2 is X1-1.
+    mv_left_q((F1,Id,X1/Y),(F2,Id,X2/Y)).
     
 mv_none((F1,Id,X/Y),(F2,Id,X/Y)):-
-    test_maxframes(F1),
-    mv_none_r((F1,Id,X/Y),(F2,Id,X/Y)).
+    mv_none_q((F1,Id,X/Y),(F2,Id,X/Y)).
 
-mv_none_r((F1,Id,X/Y),(F2,Id,X/Y)):-
-    F2 is F1 + 1.
- 
+    
 term_gt(A,B):-  
    mv_forward(A,B).
    
