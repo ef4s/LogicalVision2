@@ -9,14 +9,8 @@
 % clauses: 4 invented predicates: 1
 % clauses: 4 invented predicates: 2
 % clauses: 4 invented predicates: 3
-% clauses: 5 invented predicates: 0
-% clauses: 5 invented predicates: 1
-% clauses: 5 invented predicates: 2
-% clauses: 5 invented predicates: 3
-% clauses: 5 invented predicates: 4
-f(A,B):-map(A,B,f4).
-f4(A,B):-f3(A,C),f3(C,B).
+f(A,B):-map(A,B,f3).
 f3(A,B):-f2(A,C),f1(C,B).
-f2(A,B):-f1(A,C),f1(C,B).
-f1(A,B):-mv_left(A,C),mv_none(C,B).
-test([(1,1,1/1),(2,1,1/1),(3,1,0/1),(4,1,-1/1),(5,1,-1/1),(6,1,-1/1),(7,1,-2/1),(8,1,-3/1),(9,1,-3/1),(10,1,-3/1),(11,1,-4/1),(12,1,-5/1),(13,1,-5/1)]).
+f2(A,B):-mv_forward(A,C),mv_forward(C,B).
+f1(A,B):-mv_backward(A,C),mv_right(C,B).
+test([(1,1,1/1),(2,1,1/1),(3,1,1/2),(4,1,1/2),(5,1,2/2)]).

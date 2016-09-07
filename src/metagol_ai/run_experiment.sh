@@ -11,8 +11,8 @@ do
 #    yap -l example_objects.pl -g e >> "experiments/hypothesis_$n.pl"
     sleep 1
     echo ":-['../eval_experiment']." >> "$ename/hypothesis_$n.pl" 
-    yap -l single_experiment -g e >> "$ename/hypothesis_$n.pl"
-    yap -l eval_experiment -l $ename/hypothesis_$n.pl -g a >> $ename/result_$n.pl
+    yap -l single_experiment -g f >> "$ename/hypothesis_$n.pl"
+    yap -l eval_experiment -l $ename/hypothesis_$n.pl -g b >> $ename/result_$n.pl
     
 done
 

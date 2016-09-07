@@ -27,9 +27,8 @@ a:-
     last(X,L),
     assert(last_frame(L)),
     f([H],_),
-    retract(last_frame(L)),
-    halt.
+    retract(last_frame(L)).
 
 
-
+b:-(a;true),halt.
     

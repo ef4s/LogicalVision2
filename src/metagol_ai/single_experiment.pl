@@ -44,6 +44,8 @@ b:-
     pprint(G),
     retract(last_frame((13,_,_))).
 
+f:-(e;true),halt.
+
 e:-
     set_rand,
     create_example(E,P),
@@ -57,8 +59,7 @@ e:-
     pprint(G),
     format('test(~w).',[E]),
     
-    retract(last_frame(Last)),
-    halt.
+    retract(last_frame(Last)).
     
 create_destinations(E,D):-
     last(E,Dest),
