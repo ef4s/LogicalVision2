@@ -7,6 +7,14 @@ process_file:-
     writeln(Stream,l).
 
 
+print_areas(N):-
+    frame(N,X),
+    shape_areas(X),
+    N2 is N + 1,
+    print_areas(N2).
+
+print_areas(N):-write("Done, frames: "),write(N),nl.
+
 %write_buckets([B|T],List,[InStream|U],[OutStream|V]):-
 %    write(InStream,'['),
 %    div(List,B,L1,L2),
